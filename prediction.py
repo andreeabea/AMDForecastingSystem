@@ -14,14 +14,12 @@ y = 256
 
 model = tf.keras.models.load_model('models/autoencoder256-original-sgm.h5')
 
-
 def get_latent_codes(images):
     encoder_output = model.get_layer("encoded").output
 
     encoder_model = Model(model.input, encoder_output)
     latent_codes = encoder_model.predict(images)
     return latent_codes
-
 
 def get_test_images():
     testX = []

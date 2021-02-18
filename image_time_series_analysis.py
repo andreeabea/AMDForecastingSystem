@@ -4,7 +4,7 @@ from xml.dom import minidom
 from PIL import Image
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-from sklearn.manifold import TSNE, Isomap
+from sklearn.manifold import TSNE
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from trendypy.trendy import Trendy
@@ -13,7 +13,7 @@ from tslearn.preprocessing import TimeSeriesResampler
 from tslearn.utils import to_time_series_dataset
 
 import config
-from build_dataset import read_all_images, split_data, reshape_images
+from data_layer.build_dataset import read_all_images, reshape_images
 from prediction import get_latent_codes
 
 

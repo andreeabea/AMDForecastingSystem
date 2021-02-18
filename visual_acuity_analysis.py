@@ -31,7 +31,7 @@ def convert_Snellen_to_decimal(visualAcuity):
 
 
 def get_visual_acuity_data():
-    inputData = pd.read_csv("DMLVAVcuID.csv", nrows=282, header=None)
+    inputData = pd.read_csv("data_layer/DMLVAVcuID.csv", nrows=282, header=None)
 
     get_chunk = flow_from_df(inputData)
     chunk = next(get_chunk)
