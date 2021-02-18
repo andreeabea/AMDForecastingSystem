@@ -7,7 +7,7 @@ from PIL import Image, ImageOps
 import config
 import numpy as np
 
-from prediction import get_latent_codes
+from code_handler import CodeHandler
 from preprocessing import crop_retina_image
 
 
@@ -74,8 +74,11 @@ def read_images_lstm():
             left_eye_images = left_eye_images / 255
             right_eye_images = reshape_images(right_eye_images, x, y)
             right_eye_images = right_eye_images / 255
-            left_eye_code_sequences = get_latent_codes(left_eye_images)
-            right_eye_code_sequences = get_latent_codes(right_eye_images)
+
+            code_handler = CodeHandler()
+            left_eye_code_sequences = code_handler.get_latent_codes(left_eye_images)
+            right_eye_code_sequences = code_handler.get_latent_codes(right_eye_images)
+
             left_eye_imagesX, left_eye_imagesY = create_sequences(left_eye_code_sequences.tolist())
             right_eye_imagesX, right_eye_imagesY = create_sequences(right_eye_code_sequences.tolist())
             imagesX.append(left_eye_imagesX)
