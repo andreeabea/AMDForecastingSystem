@@ -158,6 +158,25 @@ def compare_labels(eyeData, labels):
     print("clustering accuracy: " + str(accuracy))
 
 
+def clusters_distribution(obtainedLabels):
+    good = 0
+    for l in obtainedLabels.values():
+        if l == 0:
+            good += 1
+
+    bad = len(obtainedLabels) - good
+    good = float(good) / len(obtainedLabels)
+    bad = float(bad) / len(obtainedLabels)
+    print(str(good) + " " + str(bad))
+
+    labels = ['Good evolution', 'Bad evolution']
+    percentages = []
+    percentages.append(good)
+    percentages.append(bad)
+    plt.bar(labels, percentages)
+    plt.savefig("plots/evolution_distribution")
+
+
 data = get_visual_acuity_data()
 
 leftEyeData, rightEyeData = split_eye_data(data)
@@ -171,6 +190,8 @@ format_append_data(rightEyeData, eyeData)
 
 print(eyeData)
 obtainedLabels = get_labels_dictionary()
+
 compare_labels(eyeData, obtainedLabels)
+clusters_distribution(obtainedLabels)
 
 #plot_time_series(eyeData, labels)

@@ -71,12 +71,9 @@ def plot_sequences(sequences, labels):
 
 
 def dtw_kmeans_clustering(sequences):
-    trendy = Trendy(n_clusters=2)
-    trendy.fit(sequences)
-    labels = trendy.labels_
-    # sequences = to_time_series_dataset(sequences)
-    # km = TimeSeriesKMeans(n_clusters=2, metric="dtw")
-    # labels = km.fit_predict(sequences)
+    sequences = to_time_series_dataset(sequences)
+    km = TimeSeriesKMeans(n_clusters=2, metric="dtw")
+    labels = km.fit_predict(sequences)
     return labels
 
 
@@ -99,5 +96,5 @@ def find_correlation(central_thickness, avg_thickness):
 sequences1 = get_feature_sequences(CENTRAL_AVG_THICKNESS_FEATURE)
 sequences2 = get_feature_sequences(C0_THICKNESS_FEATURE)
 find_correlation(sequences1, sequences2)
-#labels = dtw_kmeans_clustering(sequences)
+#labels = dtw_clustering(sequences)
 #plot_sequences(sequences, labels)

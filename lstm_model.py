@@ -31,21 +31,13 @@ validY = validY.reshape(-1, nb_sequences, nb_features)
 
 #create and fit the multivariate LSTM network
 model = Sequential()
-model.add(LSTM(256, input_shape=(nb_sequences, nb_features), return_sequences=True))
-model.add(LSTM(256, return_sequences = True))
-model.add(LSTM(256, return_sequences = True))
-model.add(LSTM(128, return_sequences = False))
-model.add(Dense(nb_features))#, activation="sigmoid"))
+model.add(LSTM(256, input_shape=(nb_sequences, nb_features)))
+model.add(Dense(nb_features))
 model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_squared_error'])
 
 my_callbacks = [
-    tf.keras.callbacks.ModelCheckpoint(filepath='gdrive/MyDrive/model.h5'),
-    tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
-]
-
-my_callbacks = [
     tf.keras.callbacks.ModelCheckpoint(filepath='./lstm.h5'),
-    tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
+    tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
 ]
 
 model.fit(trainX, trainY, epochs=50, batch_size=8, verbose=2,

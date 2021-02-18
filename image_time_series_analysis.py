@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE, Isomap
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-#from trendypy.trendy import Trendy
+from trendypy.trendy import Trendy
 from tslearn.clustering import TimeSeriesKMeans
+from tslearn.preprocessing import TimeSeriesResampler
 from tslearn.utils import to_time_series_dataset
 
 import config
@@ -139,19 +140,40 @@ def plot_sequence_clusters(sequences, labels):
 
 
 def dtw_clustering(sequences):
-    #trendy = Trendy(n_clusters=2)
-    #trendy.fit(code_sequences)
-    #labels = trendy.labels_
+    trendy = Trendy(n_clusters=2)
+    trendy.fit(sequences)
+    labels = trendy.labels_
+    return labels
+
+
+def kmeans_dtw_clustering(sequences):
+    sz = 16
+    sequences = TimeSeriesResampler(sz=sz).fit_transform(sequences)
     sequences = to_time_series_dataset(sequences)
     km = TimeSeriesKMeans(n_clusters=2, metric="softdtw")
     labels = km.fit_predict(sequences)
+
+    for yi in range(2):
+        plt.subplot(3, 3, 4 + yi)
+        for xx in sequences[labels == yi]:
+            plt.plot(xx.ravel(), "k-", alpha=.2)
+        plt.plot(km.cluster_centers_[yi].ravel(), "r-")
+        plt.xlim(0, sz)
+        plt.ylim(0, 4)
+        plt.text(0.55, 0.85, 'Cluster %d' % (yi + 1),
+                 transform=plt.gca().transAxes)
+        if yi == 1:
+            plt.title("DBA $k$-means")
+
+    plt.show()
+
     return labels
 
 
 def get_labels_dictionary():
     keys = []
     code_sequences = get_latent_code_sequences()
-    labels = dtw_clustering(code_sequences)
+    labels = kmeans_dtw_clustering(code_sequences)
 
     for patient in os.scandir(config.ORIG_INPUT_DATASET):
         visits = len(list(os.scandir(patient)))
@@ -176,14 +198,14 @@ def get_labels_dictionary():
     return dict(zip(keys, labels))
 
 
-def isomap(data):
-    model = Isomap(n_components=2)
-    proj = model.fit_transform(data)
-
-    ax = plt.gca()
-
-    proj = model.fit_transform(data)
-    ax.plot(proj[:, 0], proj[:, 1], '.k')
+# def isomap(data):
+#     model = Isomap(n_components=2)
+#     proj = model.fit_transform(data)
+#
+#     ax = plt.gca()
+#
+#     proj = model.fit_transform(data)
+#     ax.plot(proj[:, 0], proj[:, 1], '.k')
 
 
 def dimensionality_reduction():
@@ -195,11 +217,11 @@ def dimensionality_reduction():
     #pca2(images)
     tSNE(images, 0)
 
-    #find_cum_explained_variance(images)
+    find_cum_explained_variance(images)
 
 
-#code_sequences = get_latent_code_sequences()
-#labels = dtw_clustering(code_sequences)
-#plot_sequence_clusters(code_sequences, labels)
+code_sequences = get_latent_code_sequences()
+labels = dtw_clustering(code_sequences)
+plot_sequence_clusters(code_sequences, labels)
 
-#dimensionality_reduction()
+dimensionality_reduction()
