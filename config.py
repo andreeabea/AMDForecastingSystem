@@ -1,6 +1,6 @@
 import os
 # initialize the path to the *original* input directory of images
-ORIG_INPUT_DATASET = "./data"
+ORIG_INPUT_DATASET = "data"
 
 # TODO: save splitted data into folders
 # initialize the base path to the *new* directory that will contain
