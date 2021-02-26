@@ -8,10 +8,9 @@ import config
 import numpy as np
 
 from code_handler import CodeHandler
-from preprocessing import crop_retina_image
 
 
-def create_sequences(eye_images):
+def create_sequences(eye_images, nb_features=256):
     # imagesX[i] will contain current image, imagesY[i] the next image in the sequence after imagesX[i]
     imagesX = []
     imagesY = []
@@ -21,8 +20,8 @@ def create_sequences(eye_images):
 
     imagesX = np.array(imagesX)
     imagesY = np.array(imagesY)
-    imagesX = imagesX.reshape(-1, 256)
-    imagesY = imagesY.reshape(-1, 256)
+    imagesX = imagesX.reshape(-1, nb_features)
+    imagesY = imagesY.reshape(-1, nb_features)
 
     return imagesX, imagesY
 
@@ -127,8 +126,13 @@ def reshape_images(images, x, y):
     return images
 
 
-def split_data_lstm():
-    x, y, imagesX, imagesY = read_images_lstm()
+def split_data_lstm(dataX=None, dataY=None):
+    if dataX is None and dataY is None:
+        x, y, imagesX, imagesY = read_images_lstm()
+    else:
+        imagesX = dataX
+        imagesY = dataY
+
     imagesX = np.vstack(imagesX)
     imagesY = np.vstack(imagesY)
 

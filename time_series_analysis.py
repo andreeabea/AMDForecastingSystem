@@ -12,13 +12,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import pearsonr
 
+from data_layer.build_dataset import create_sequences
+from neural_networks.lstm import Lstm
+from sklearn import linear_model
+
+from visual_acuity_analysis import VisualAcuityAnalysis
+
 
 class RetinaFeatureAnalysis:
 
     CENTRAL_AVG_THICKNESS_FEATURE = "CentralThickness"
-    C0_THICKNESS_FEATURE = "AvgThickness"
+    THICKNESS_FEATURE = "AvgThickness"
 
-    def get_feature_sequences(self, feature_name):
+    def get_feature_sequences(self, feature_name, zone=0):
         sequences = []
 
         for patient in os.scandir(config.ORIG_INPUT_DATASET):
@@ -36,11 +42,11 @@ class RetinaFeatureAnalysis:
                             xmlfile = minidom.parse(file.path)
                             #patientID = xmlfile.getElementsByTagName('ID')[0].firstChild.nodeValue
                             feature = xmlfile.getElementsByTagName(feature_name)
-                            if feature[0].firstChild is not None:
+                            if feature[zone].firstChild is not None:
                                 if "OS" in eye.name:
-                                    featurelist_left.append(float(feature[0].firstChild.nodeValue))
+                                    featurelist_left.append(float(feature[zone].firstChild.nodeValue))
                                 else:
-                                    featurelist_right.append(float(feature[0].firstChild.nodeValue))
+                                    featurelist_right.append(float(feature[zone].firstChild.nodeValue))
 
             if len(featurelist_left) > 1:
                 sequences.append(featurelist_left)
@@ -75,29 +81,90 @@ class RetinaFeatureAnalysis:
 
         return labels
 
-    def find_correlation(self, central_thickness, avg_thickness):
+    def find_correlation(self, feature1, feature2):
         correlation = 0
-        nb_timeseries = len(central_thickness)
         valid_series = 0
-        for i in range(nb_timeseries):
-            #plt.scatter(central_thickness[i], avg_thickness[i])
-            #plt.show()
-            if len(central_thickness[i]) == len(avg_thickness[i]):
-                r, p = pearsonr(central_thickness[i], avg_thickness[i])
+        len_feature1 = len(feature1)
+        len_feature2 = len(feature2)
+        i = 0
+        j = 0
+        while i < len_feature1 and j < len_feature2:
+            if len(feature1[i]) == len(feature2[j]):
+                plt.scatter(feature1[i], feature2[i])
+                r, p = pearsonr(feature1[i], feature2[j])
                 if math.isnan(r) == False:
                     correlation += r
                     valid_series += 1
-
+                i += 1
+                j += 1
+            else:
+                if len_feature1 < len_feature2:
+                    del feature2[j]
+                else:
+                    del feature1[i]
+                len_feature1 = len(feature1)
+                len_feature2 = len(feature2)
+        plt.show()
         correlation = float(correlation)/valid_series
         print("average correlation: " + str(correlation))
 
 
 if __name__ == '__main__':
+    va_analysis = VisualAcuityAnalysis()
+    eyeData = va_analysis.get_va_df()
+
     retina_analysis = RetinaFeatureAnalysis()
 
-    sequences1 = retina_analysis.get_feature_sequences(RetinaFeatureAnalysis.CENTRAL_AVG_THICKNESS_FEATURE)
-    sequences2 = retina_analysis.get_feature_sequences(RetinaFeatureAnalysis.C0_THICKNESS_FEATURE)
+    sequences1 = retina_analysis.get_feature_sequences(RetinaFeatureAnalysis.THICKNESS_FEATURE, 3)
+    sequences2 = retina_analysis.get_feature_sequences(RetinaFeatureAnalysis.THICKNESS_FEATURE, 7)
     retina_analysis.find_correlation(sequences1, sequences2)
+
+    # concatenate features
+    sequences = []
+    for i in range(len(sequences1)):
+        sequence = []
+        for j in range(len(sequences1[i])):
+            visit = [sequences1[i][j], sequences2[i][j]]
+            sequence.append(visit)
+        sequences.append(sequence)
+
+    # create X and Y lists
+    dataX = []
+    dataY = []
+    for i in range(len(sequences)):
+        dataX_aux, dataY_aux = create_sequences(sequences[i], 2)
+        dataX.append(dataX_aux)
+        dataY.append(dataY_aux)
+
+    best_model = None
+    min_loss = 1000
+    predictions = []
+    predictionY = []
+    for i in range(len(dataX)):
+        if len(dataX[i]) > 4:
+            lstm = Lstm(2, len(dataX[i]), dataX[i], dataY[i])
+            lstm.train()
+
+            loss, prediction = lstm.evaluate_model()
+            if loss < min_loss:
+                best_model = lstm
+                min_loss = loss
+            if prediction is not None:
+                predictions.append(prediction[0])
+                predictionY.append(dataY[i][len(dataY[i])-1])
+
+    best_model.model.save('../models/lstm.h5')
+    print("----------Best model----------")
+    best_loss, best_output = best_model.evaluate_model()
+
+    predictions = np.array(predictions)
+    predictionY = np.array(predictionY)
+    clf = linear_model.LinearRegression(fit_intercept=False)
+    clf.fit(predictions, predictionY)
+    print("----------Linear Regression----------")
+    print("prediction: ", clf.predict(predictions))
+    print("actual: ", predictionY)
+    print(clf.score(predictions, predictionY))
 
     #labels = dtw_kmeans_clustering(sequences)
     #plot_sequences(sequences, labels)

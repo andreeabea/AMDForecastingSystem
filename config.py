@@ -1,6 +1,6 @@
 import os
 # initialize the path to the *original* input directory of images
-ORIG_INPUT_DATASET = "data"
+ORIG_INPUT_DATASET = "D:\\Licenta\\licenta\\data"
 
 # TODO: save splitted data into folders
 # initialize the base path to the *new* directory that will contain
@@ -12,7 +12,7 @@ VAL_PATH = os.path.sep.join([BASE_PATH, "validation"])
 TEST_PATH = os.path.sep.join([BASE_PATH, "testing"])
 
 # define the amount of data that will be used training
-TRAIN_SPLIT = 0.7
+TRAIN_SPLIT = 0.6
 # the amount of validation data
 VAL_SPLIT = 0.2
 

@@ -115,7 +115,7 @@ class VisualAcuityAnalysis:
                 entry['Date'] = (entry['Date'].astype('int64') // (60 * 60 * 24 * (10 ** 9)) - firstVisit)/30
                 dataList.append(entry)
 
-    def plot_time_series(self, eyeData, labels):
+    def plot_time_series(self, eyeData, labels=None):
         fig, ax = plt.subplots()
         fig.set_size_inches(16, 10.5)
 
@@ -129,8 +129,11 @@ class VisualAcuityAnalysis:
                 for visit in range(nb_visits):
                     visits.append(visit)
                 id = eyeData[i]['New ID'].tolist()[0]
-                label = labels[id]
-                color = cmap[label]
+                if labels is not None:
+                    label = labels[id]
+                    color = cmap[label]
+                else:
+                    color = cmap[0]
                 plt.plot(visits, eyeData[i]['Eye'], color=color, alpha=0.5)
         plt.show()
 
@@ -177,25 +180,29 @@ class VisualAcuityAnalysis:
         plt.bar(labels, percentages)
         plt.savefig("plots/evolution_distribution")
 
+    def get_va_df(self):
+        data = self.get_visual_acuity_data()
+
+        leftEyeData, rightEyeData = self.split_eye_data(data)
+
+        self.set_new_ID(leftEyeData, "OS")
+        self.set_new_ID(rightEyeData, "OD")
+
+        eyeData = []
+        self.format_append_data(leftEyeData, eyeData)
+        self.format_append_data(rightEyeData, eyeData)
+
+        return eyeData
 
 if __name__ == '__main__':
     va_analysis = VisualAcuityAnalysis()
 
-    data = va_analysis.get_visual_acuity_data()
-
-    leftEyeData, rightEyeData = va_analysis.split_eye_data(data)
-
-    va_analysis.set_new_ID(leftEyeData, "OS")
-    va_analysis.set_new_ID(rightEyeData, "OD")
-
-    eyeData = []
-    va_analysis.format_append_data(leftEyeData, eyeData)
-    va_analysis.format_append_data(rightEyeData, eyeData)
+    eyeData = va_analysis.get_va_df()
 
     print(eyeData)
-    obtainedLabels = va_analysis.img_analysis.get_labels_dictionary()
+    #obtainedLabels = va_analysis.img_analysis.get_labels_dictionary()
 
-    va_analysis.compare_labels(eyeData, obtainedLabels)
-    va_analysis.clusters_distribution(obtainedLabels)
+    #va_analysis.compare_labels(eyeData, obtainedLabels)
+    #va_analysis.clusters_distribution(obtainedLabels)
 
-    #plot_time_series(eyeData, labels)
+    #va_analysis.plot_time_series(eyeData)
