@@ -7,6 +7,7 @@ import numpy as np
 
 # reorganise and clean data
 from image_time_series_analysis import ImageAnalysis
+from data_layer.build_dataset import create_sequences
 
 
 class VisualAcuityAnalysis:
@@ -36,7 +37,7 @@ class VisualAcuityAnalysis:
         return visualAcuity
 
     def get_visual_acuity_data(self):
-        inputData = pd.read_csv("data_layer/DMLVAVcuID.csv", nrows=282, header=None)
+        inputData = pd.read_csv("D:\\Licenta\\licenta\\data_layer\\DMLVAVcuID.csv", nrows=282, header=None)
 
         get_chunk = self.flow_from_df(inputData)
         chunk = next(get_chunk)
@@ -112,7 +113,8 @@ class VisualAcuityAnalysis:
                 entry = entry.sort_values(by=['Date'])
                 firstVisit = int(entry.iloc[0]['Date'].timestamp() // (60 * 60 * 24))
                 # nb of days from the first visit?
-                entry['Date'] = (entry['Date'].astype('int64') // (60 * 60 * 24 * (10 ** 9)) - firstVisit)/30
+                # denominator = 7 => nb of weeks, denominator = 1 => nb_of days, denominator = 30 => nb of months
+                entry['New Date'] = (entry['Date'].astype('int64') // (60 * 60 * 24 * (10 ** 9)) - firstVisit)/7
                 dataList.append(entry)
 
     def plot_time_series(self, eyeData, labels=None):
@@ -178,7 +180,7 @@ class VisualAcuityAnalysis:
         percentages.append(good)
         percentages.append(bad)
         plt.bar(labels, percentages)
-        plt.savefig("plots/evolution_distribution")
+        #plt.savefig("plots/evolution_distribution")
 
     def get_va_df(self):
         data = self.get_visual_acuity_data()
@@ -194,12 +196,24 @@ class VisualAcuityAnalysis:
 
         return eyeData
 
+    def get_va_feature_list(self, eyeData):
+        sequences = []
+        for df in eyeData:
+            sequence = []
+            for i in range(len(df.index)):
+                sequence.append(df['Eye'].iloc[i])
+            sequences.append(sequence)
+
+        return sequences
+
+
 if __name__ == '__main__':
     va_analysis = VisualAcuityAnalysis()
 
     eyeData = va_analysis.get_va_df()
 
     print(eyeData)
+
     #obtainedLabels = va_analysis.img_analysis.get_labels_dictionary()
 
     #va_analysis.compare_labels(eyeData, obtainedLabels)

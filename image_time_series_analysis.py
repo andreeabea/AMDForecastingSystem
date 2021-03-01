@@ -222,6 +222,6 @@ if __name__ == '__main__':
 
     code_sequences = img_analysis.get_latent_code_sequences()
     labels = img_analysis.dtw_clustering(code_sequences)
-    img_analysis.plot_sequence_clusters(code_sequences, labels)
+    #img_analysis.plot_sequence_clusters(code_sequences, labels)
 
-    img_analysis.dimensionality_reduction()
+    #img_analysis.dimensionality_reduction()

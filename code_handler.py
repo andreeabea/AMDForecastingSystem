@@ -19,6 +19,8 @@ class CodeHandler:
 
         self.model = tf.keras.models.load_model('D:\\Licenta\\licenta\\models\\autoencoder256-original-sgm.h5')
 
+        self.model.summary()
+
     def get_latent_codes(self, images):
         encoder_output = self.model.get_layer("encoded").output
 
@@ -27,9 +29,33 @@ class CodeHandler:
 
         return latent_codes
 
+    # not working
+    def decode(self, latent_codes):
+        encoder_output = self.model.get_layer("encoded").output
+        encoder_model = Model(self.model.input, encoder_output)
+
+        decoder_input = Input(shape=encoder_model.output.shape[1:])
+        decoder_output = decoder_input
+        norm_layer_count = 10
+        for i in range(16, len(self.model.layers), 1):
+            if i==21 or i==25 or i==29 or i==33 or i==37 or i==41:
+                decoder_output = self.model.layers[i]([decoder_output, self.model.layers[i-norm_layer_count].output])
+                norm_layer_count += 6
+            else:
+                decoder_output = self.model.layers[i](decoder_output)
+
+        decoder = Model(decoder_input, decoder_output)
+
+        prediction = decoder.predict(latent_codes)
+
+        for i in range(len(prediction)):
+            predictedImage = Image.fromarray((prediction[i].reshape(self.image_width, self.image_height)*255).astype(np.uint8))
+            predictedImage.show("prediction")
+            input()
+
     def get_test_images(self):
         testX = []
-        image = Image.open("./data/Pacient 3/Vizita 2 - 05.12.2019/OD/602BBD40.tif").convert("L")
+        image = Image.open("./data/Pacient 3/Vizita 2 - 05.12.2019/OD/60542CD0.tif").convert("L")
 
         # resize img
         image = np.array(image.resize((self.image_width, self.image_height), Image.ANTIALIAS))
@@ -103,8 +129,8 @@ class CodeHandler:
         heatmap = np.maximum(heatmap, 0) / np.max(heatmap)
 
         # Display heatmap
-        #plt.matshow(heatmap)
-        #plt.show()
+        plt.matshow(heatmap)
+        plt.show()
 
         # We rescale heatmap to a range 0-255
         heatmap = np.uint8(255 * heatmap)
@@ -132,7 +158,7 @@ if __name__ == '__main__':
     code_handler = CodeHandler()
 
     test = code_handler.get_test_images()
-    code_handler.reconstruct_images(test)
+    #code_handler.reconstruct_images(test)
 
     #code_handler.compute_activation_map(test)
     code_handler.get_gradcam_heatmap(test)

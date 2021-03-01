@@ -8,9 +8,10 @@ import config
 import numpy as np
 
 from code_handler import CodeHandler
+from datetime import datetime
 
 
-def create_sequences(eye_images, nb_features=256):
+def create_sequences(eye_images, nb_features=257):
     # imagesX[i] will contain current image, imagesY[i] the next image in the sequence after imagesX[i]
     imagesX = []
     imagesY = []
@@ -26,13 +27,15 @@ def create_sequences(eye_images, nb_features=256):
     return imagesX, imagesY
 
 
-def read_images_lstm():
+def read_images_lstm(eyeData=None):
     # compute input data for LSTM model
     imagesX = []
     imagesY = []
     first = True
     x = -1
     y = -1
+
+    code_handler = CodeHandler()
 
     for patient in os.scandir(config.ORIG_INPUT_DATASET):
         visits = len(list(os.scandir(patient)))
@@ -41,16 +44,22 @@ def read_images_lstm():
         #print(visits)
         left_eye_images = []
         right_eye_images = []
+
+        left_eye_va = []
+        right_eye_va = []
+
         for visit in os.scandir(patient):
-            #print(visit.name)
+            date = datetime.strptime(visit.name.split("- ")[1], '%d.%m.%Y')
             for eye in os.scandir(visit):
                 # the scan of the retina fundus of the eye will not be added
                 fundusImgPath = ""
                 for file in os.scandir(eye):
                     if file.path.endswith(".xml"):
                         xmlfile = minidom.parse(file.path)
+                        patientID = xmlfile.getElementsByTagName('ID')[0].firstChild.nodeValue
                         fundusImgPath = xmlfile.getElementsByTagName('ExamURL')[0].firstChild.nodeValue.rsplit("\\", 1)[1]
                 for imageFile in os.scandir(eye):
+                    # initially: fundusImgPath not in imageFile.name
                     if imageFile.path.endswith(".tif") and fundusImgPath not in imageFile.name:
                         image = Image.open(imageFile.path).convert("L")
                         # resize img
@@ -63,9 +72,21 @@ def read_images_lstm():
                         if image.shape[0] == x and image.shape[1] == y:
                             image = image.reshape(x, y, 1)
                             if "OS" in eye.name:
-                                left_eye_images.append(image)
+                                if eyeData is not None:
+                                    visual_acuity = find_visual_acuity(eyeData, patientID, "OS", date)
+                                    if visual_acuity >= 0:
+                                        left_eye_va.append(visual_acuity)
+                                        left_eye_images.append(image)
+                                else:
+                                    left_eye_images.append(image)
                             else:
-                                right_eye_images.append(image)
+                                if eyeData is not None:
+                                    visual_acuity = find_visual_acuity(eyeData, patientID, "OD", date)
+                                    if visual_acuity >= 0:
+                                        right_eye_va.append(visual_acuity)
+                                        right_eye_images.append(image)
+                                else:
+                                    right_eye_images.append(image)
                         break
 
         if len(left_eye_images) > 1 and len(right_eye_images) > 1:
@@ -74,9 +95,12 @@ def read_images_lstm():
             right_eye_images = reshape_images(right_eye_images, x, y)
             right_eye_images = right_eye_images / 255
 
-            code_handler = CodeHandler()
             left_eye_code_sequences = code_handler.get_latent_codes(left_eye_images)
             right_eye_code_sequences = code_handler.get_latent_codes(right_eye_images)
+
+            if eyeData is not None:
+                left_eye_code_sequences = append_va_to_features(left_eye_code_sequences, left_eye_va)
+                right_eye_code_sequences = append_va_to_features(right_eye_code_sequences, right_eye_va)
 
             left_eye_imagesX, left_eye_imagesY = create_sequences(left_eye_code_sequences.tolist())
             right_eye_imagesX, right_eye_imagesY = create_sequences(right_eye_code_sequences.tolist())
@@ -87,6 +111,24 @@ def read_images_lstm():
 
     return x, y, imagesX, imagesY
 
+
+def find_visual_acuity(eyeData, patientID, eye, date):
+    id = patientID + eye
+    for df in eyeData:
+        if df['New ID'].iloc[0] == id:
+            for i in range(len(df.index)):
+                if df['Date'].iloc[i] == date:
+                    return df['Eye'].iloc[i]
+    return -1
+
+
+def append_va_to_features(features, va_list):
+    new_features = []
+    for i in range(len(features)):
+        new = np.append(features[i], va_list[i])
+        new_features.append(new)
+
+    return np.array(new_features)
 
 def read_all_images():
     images = []
@@ -126,15 +168,22 @@ def reshape_images(images, x, y):
     return images
 
 
-def split_data_lstm(dataX=None, dataY=None):
-    if dataX is None and dataY is None:
+def split_data_lstm(scaler=None, eyeData=None, dataX=None, dataY=None):
+    if dataX is None and dataY is None and eyeData is None:
         x, y, imagesX, imagesY = read_images_lstm()
     else:
-        imagesX = dataX
-        imagesY = dataY
+        if dataX is None and dataY is None and eyeData is not None:
+            x, y, imagesX, imagesY = read_images_lstm(eyeData)
+        else:
+            imagesX = dataX
+            imagesY = dataY
 
     imagesX = np.vstack(imagesX)
     imagesY = np.vstack(imagesY)
+
+    if scaler is not None:
+        imagesX = scaler.fit_transform(imagesX)
+        imagesY = scaler.fit_transform(imagesY)
 
     # compute the training split
     i = int(len(imagesX) * config.TRAIN_SPLIT)
