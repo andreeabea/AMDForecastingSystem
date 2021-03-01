@@ -4,9 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 # reorganise and clean data
-from image_time_series_analysis import ImageAnalysis
+from image_analysis import ImageAnalysis
 from data_layer.build_dataset import create_sequences
 
 
@@ -15,12 +14,13 @@ class VisualAcuityAnalysis:
     def __init__(self):
         self.img_analysis = ImageAnalysis()
 
+    # read chunks of size 3 from .csv
     def flow_from_df(self, dataframe: pd.DataFrame, chunk_size: int = 3):
         for start_row in range(0, dataframe.shape[0], chunk_size):
             end_row = min(start_row + chunk_size, dataframe.shape[0])
             yield dataframe.iloc[start_row:end_row, :]
 
-
+    # convert VA to decimal representation
     def convert_Snellen_to_decimal(self, visualAcuity):
         # if interval choose median value
         if '-' in visualAcuity:
@@ -49,6 +49,8 @@ class VisualAcuityAnalysis:
             try:
                 entryNumber = chunk[0].iloc[0]
                 patientID = chunk[1].iloc[0]
+
+                # perform data cleaning and solve inconsistencies
 
                 if patientID == '8615':
                     patientID = '276'
@@ -86,6 +88,7 @@ class VisualAcuityAnalysis:
         data = data.set_index('ID')
         return data
 
+    # split left and right eye data
     def split_eye_data(self, data):
 
         data['Date']= pd.to_datetime(data['Date'], format='%d.%m.%Y')
@@ -117,6 +120,7 @@ class VisualAcuityAnalysis:
                 entry['New Date'] = (entry['Date'].astype('int64') // (60 * 60 * 24 * (10 ** 9)) - firstVisit)/7
                 dataList.append(entry)
 
+    # visualize time series with 2-class labels
     def plot_time_series(self, eyeData, labels=None):
         fig, ax = plt.subplots()
         fig.set_size_inches(16, 10.5)
@@ -137,8 +141,10 @@ class VisualAcuityAnalysis:
                 else:
                     color = cmap[0]
                 plt.plot(visits, eyeData[i]['Eye'], color=color, alpha=0.5)
+
         plt.show()
 
+    # set entry ID based on patient ID and eye (left or right)
     def set_new_ID(self, eyeData, eyeString):
         index_list = eyeData.index.tolist()
         new_id_list = []
@@ -147,6 +153,7 @@ class VisualAcuityAnalysis:
             new_id_list.append(new_id)
         eyeData['New ID'] = new_id_list
 
+    # compare actual VA labels with labels obtained from clustering
     def compare_labels(self, eyeData, labels):
         accuracy = 0
         nb_series = 0
@@ -164,6 +171,7 @@ class VisualAcuityAnalysis:
         accuracy = float(accuracy)/nb_series
         print("clustering accuracy: " + str(accuracy))
 
+    # visualize cluster distribution
     def clusters_distribution(self, obtainedLabels):
         good = 0
         for l in obtainedLabels.values():
@@ -180,8 +188,10 @@ class VisualAcuityAnalysis:
         percentages.append(good)
         percentages.append(bad)
         plt.bar(labels, percentages)
-        #plt.savefig("plots/evolution_distribution")
 
+        plt.savefig("plots/evolution_distribution")
+
+    # get the final dataframe
     def get_va_df(self):
         data = self.get_visual_acuity_data()
 
@@ -196,6 +206,7 @@ class VisualAcuityAnalysis:
 
         return eyeData
 
+    # get the list with all visual acuity sequences
     def get_va_feature_list(self, eyeData):
         sequences = []
         for df in eyeData:

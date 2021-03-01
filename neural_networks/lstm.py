@@ -7,9 +7,7 @@ from tensorflow.keras import backend as K
 
 import matplotlib.pyplot as plt
 
-import config
-from code_handler import CodeHandler
-from data_layer.build_dataset import split_data_lstm, create_sequences
+from data_layer.build_dataset import split_data_lstm
 import numpy as np
 
 from visual_acuity_analysis import VisualAcuityAnalysis
@@ -21,7 +19,7 @@ class Lstm:
         self.nb_features = nb_features
         self.nb_sequences = nb_sequences
 
-        self.scaler = MinMaxScaler(feature_range=(0, 1))
+        #self.scaler = MinMaxScaler(feature_range=(0, 1))
 
         if dataX is not None and dataY is not None:
             self.trainX, self.trainY, self.validX, self.validY, self.testX, self.testY = split_data_lstm(None, None, dataX, dataY)
@@ -60,6 +58,7 @@ class Lstm:
         return K.sqrt(K.mean(K.square(pct_var)))
 
     def train(self):
+        # MAE performed better than MSE or others
         self.model.compile(loss='mean_absolute_error', optimizer='adam', metrics=['mean_absolute_error'])
 
         my_callbacks = [
@@ -76,7 +75,7 @@ class Lstm:
         plt.legend()
         plt.show()
 
-        #plt.savefig('../plots/loss-lstm.png')
+        plt.savefig('../plots/loss-lstm.png')
 
     def evaluate_model(self):
         # evaluate model
@@ -84,13 +83,19 @@ class Lstm:
             print("Evaluate on test data")
             results = self.model.evaluate(self.testX, self.testY)
             print("test loss:", results)
+
             print("Predict ...")
             test_predict = self.model.predict(self.testX, batch_size=1)
-            #prediction = self.scaler.inverse_transform(test_predict)
-            prediction = test_predict
+
+            if self.scaler is not None:
+                prediction = self.scaler.inverse_transform(test_predict)
+            else:
+                prediction = test_predict
+
             print("predicted value: ", prediction)
             print("testX : ", self.testX)
             print("testY: ", self.testY)
+
             return results[0], prediction
         else:
             return 1000, None
@@ -103,6 +108,3 @@ if __name__ == '__main__':
 
     #lstm.model = tf.keras.models.load_model('D:\\Licenta\\licenta\\models\\lstm-va.h5')
     loss, prediction = lstm.evaluate_model()
-
-    # code_handler = CodeHandler()
-    # code_handler.decode(np.array([prediction[-1]]))

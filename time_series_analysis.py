@@ -30,15 +30,16 @@ class RetinaFeatureAnalysis:
 
         for patient in os.scandir(config.ORIG_INPUT_DATASET):
             visits = len(list(os.scandir(patient)))
-            #print(patient.name + " " + str(visits))
+
             if (visits <= 1):
                 continue
+
             featurelist_left = []
             featurelist_right = []
             left_eye_va = []
             right_eye_va = []
+
             for visit in os.scandir(patient):
-                #print(visit.name)
                 for eye in os.scandir(visit):
                     date = datetime.strptime(visit.name.split("- ")[1], '%d.%m.%Y')
                     for file in os.scandir(eye):
@@ -206,16 +207,6 @@ if __name__ == '__main__':
 
     sequences = retina_analysis.concatenate_features(sequences1, sequences2)
 
-    # dataX = []
-    # dataY = []
-    # for i in range(len(sequences)):
-    #     if len(sequences[i]) >= 3:
-    #         generator = TimeseriesGenerator(sequences[i], sequences[i], length=2, batch_size=1)
-    #         for j in range(len(generator)):
-    #             x, y = generator[i]
-    #             dataX.append(x)
-    #             dataY.append(y)
-
     retina_analysis.compare_va_labels(sequences)
 
     if isinstance(sequences[0][0], float):
@@ -226,35 +217,10 @@ if __name__ == '__main__':
     # create X and Y lists
     dataX, dataY = retina_analysis.create_XY(sequences, nb_features)
 
-    #best_model = None
-    #min_loss = 1000
-    #predictions = []
-    #predictionY = []
-    #for i in range(len(dataX)):
-        #if len(dataX[i]) > 4:
     lstm = Lstm(nb_features, 1, dataX, dataY)
     lstm.train()
 
     loss, prediction = lstm.evaluate_model()
-            # if loss < min_loss:
-            #     best_model = lstm
-            #     min_loss = loss
-            # if prediction is not None:
-            #     predictions.append(prediction[0])
-            #     predictionY.append(dataY[i][len(dataY[i])-1])
-
-    #best_model.model.save('../models/lstm.h5')
-    # print("----------Best model----------")
-    # best_loss, best_output = best_model.evaluate_model()
-
-    # predictions = np.array(predictions)
-    # predictionY = np.array(predictionY)
-    # clf = linear_model.LinearRegression(fit_intercept=False)
-    # clf.fit(predictions, predictionY)
-    # print("----------Linear Regression----------")
-    # print("prediction: ", clf.predict(predictions))
-    # print("actual: ", predictionY)
-    # print(clf.score(predictions, predictionY))
 
     #labels = dtw_kmeans_clustering(sequences)
     #plot_sequences(sequences, labels)

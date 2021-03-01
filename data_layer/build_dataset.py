@@ -39,9 +39,10 @@ def read_images_lstm(eyeData=None):
 
     for patient in os.scandir(config.ORIG_INPUT_DATASET):
         visits = len(list(os.scandir(patient)))
+        # do not consider sequences with just 1 visit
         if (visits <= 1):
             continue
-        #print(visits)
+
         left_eye_images = []
         right_eye_images = []
 
@@ -130,6 +131,7 @@ def append_va_to_features(features, va_list):
 
     return np.array(new_features)
 
+# get images to feed autoencoder
 def read_all_images():
     images = []
     x = 256
@@ -170,37 +172,40 @@ def reshape_images(images, x, y):
 
 def split_data_lstm(scaler=None, eyeData=None, dataX=None, dataY=None):
     if dataX is None and dataY is None and eyeData is None:
-        x, y, imagesX, imagesY = read_images_lstm()
+        # data is not given and VA should not be included
+        x, y, dataX, dataY = read_images_lstm()
     else:
         if dataX is None and dataY is None and eyeData is not None:
-            x, y, imagesX, imagesY = read_images_lstm(eyeData)
-        else:
-            imagesX = dataX
-            imagesY = dataY
+            # include VA data from .csv
+            x, y, dataX, dataY = read_images_lstm(eyeData)
 
-    imagesX = np.vstack(imagesX)
-    imagesY = np.vstack(imagesY)
+    # otherwise (if dataX and dataY are not None) data is passed as parameters
 
+    dataX = np.vstack(dataX)
+    dataY = np.vstack(dataY)
+
+    # if data needs to be scaled/normalized
     if scaler is not None:
-        imagesX = scaler.fit_transform(imagesX)
-        imagesY = scaler.fit_transform(imagesY)
+        dataX = scaler.fit_transform(dataX)
+        dataY = scaler.fit_transform(dataY)
 
     # compute the training split
-    i = int(len(imagesX) * config.TRAIN_SPLIT)
-    trainX = imagesX[:i]
-    trainY = imagesY[:i]
+    i = int(len(dataX) * config.TRAIN_SPLIT)
+    trainX = dataX[:i]
+    trainY = dataY[:i]
 
     # obtain the validation and testing splits
-    valid = int(len(imagesX) * config.VAL_SPLIT)
-    validX = imagesX[i:i+valid]
-    validY = imagesY[i:i+valid]
+    valid = int(len(dataX) * config.VAL_SPLIT)
+    validX = dataX[i:i+valid]
+    validY = dataY[i:i+valid]
 
-    testX = imagesX[i+valid:]
-    testY = imagesY[i+valid:]
+    testX = dataX[i+valid:]
+    testY = dataY[i+valid:]
 
     return trainX, trainY, validX, validY, testX, testY
 
 
+# split data for the autoencoder
 def split_data():
     x, y, images = read_all_images()
     images = reshape_images(images, x, y)

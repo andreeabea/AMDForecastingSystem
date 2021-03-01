@@ -33,18 +33,17 @@ class ImageAnalysis:
 
         return images
 
+    # dimensionality reduction methods for the images, as well for the latent codes
     def pca2(self, images):
         pca = PCA(2)  # project to 2 dimensions
         projected = pca.fit_transform(images)
-        #print(images.shape)
-        #print(projected.shape)
 
         plt.scatter(projected[:, 0], projected[:, 1],
                     edgecolor='none', alpha=0.5,
                     color='blue')
         plt.xlabel('component 1')
         plt.ylabel('component 2')
-        plt.savefig("plotC0.png")
+        plt.savefig("plot-pca2.png")
 
     def tSNE(self, data, datatype):
         # first reduce dimensionality - if the given data are images
@@ -65,11 +64,12 @@ class ImageAnalysis:
         plt.savefig("plots/t-SNE2.png")
 
     def find_cum_explained_variance(self, images):
-        # find the PCA dimensionality to represent most of the data (99%)
+        # find the PCA dimensionality to represent most of the data
         sc = StandardScaler()
         images = sc.fit_transform(images)
 
         print("computing pca")
+        # find the number of dimensions to represent at least 80% of data
         pca = PCA(n_components=0.8, svd_solver='full').fit(images)
         print(pca.n_components_)
         print("obtained PCA\nPlotting...")
@@ -84,13 +84,12 @@ class ImageAnalysis:
 
         for patient in os.scandir(config.ORIG_INPUT_DATASET):
             visits = len(list(os.scandir(patient)))
-            #print(patient.name + " " + str(visits))
             if (visits <= 1):
                 continue
             left_eye_images = []
             right_eye_images = []
+
             for visit in os.scandir(patient):
-                #print(visit.name)
                 for eye in os.scandir(visit):
                     fundusImgPath = ""
                     for file in os.scandir(eye):
@@ -110,9 +109,6 @@ class ImageAnalysis:
                                 else:
                                     right_eye_images.append(image)
                             break
-
-            #if len(left_eye_images) == 1 or len(right_eye_images) == 1:
-            #    print(patient.name)
 
             if len(left_eye_images) > 1:
                 left_eye_images = reshape_images(left_eye_images, self.image_width, self.image_height)
@@ -137,23 +133,26 @@ class ImageAnalysis:
             plt.scatter(projected[:, 0], projected[:, 1], alpha=0.5, color=color)
             plt.xlabel('component 1')
             plt.ylabel('component 2')
-            plt.savefig("plots/pca-labelled256-kmeans2.png")
+            plt.savefig("plots/sequence-clusters-pca.png")
 
-    def dtw_clustering(self, sequences):
-        trendy = Trendy(n_clusters=2)
+    # Dynamic Time Warping Clustering using TrendyPy library
+    def dtw_clustering(self, sequences, nb_clusters):
+        trendy = Trendy(n_clusters=nb_clusters)
         trendy.fit(sequences)
         labels = trendy.labels_
 
         return labels
 
-    def kmeans_dtw_clustering(self, sequences):
+    # Kmeans clustering using DTW distance instead of Euclidean distance
+    def kmeans_dtw_clustering(self, sequences, nb_clusters):
         sz = 16
         sequences = TimeSeriesResampler(sz=sz).fit_transform(sequences)
         sequences = to_time_series_dataset(sequences)
-        km = TimeSeriesKMeans(n_clusters=2, metric="softdtw")
+        km = TimeSeriesKMeans(n_clusters=nb_clusters, metric="softdtw")
         labels = km.fit_predict(sequences)
 
-        for yi in range(2):
+        # TODO: add code source
+        for yi in range(nb_clusters):
             plt.subplot(3, 3, 4 + yi)
             for xx in sequences[labels == yi]:
                 plt.plot(xx.ravel(), "k-", alpha=.2)
@@ -196,19 +195,10 @@ class ImageAnalysis:
 
         return dict(zip(keys, labels))
 
-    # def isomap(data):
-    #     model = Isomap(n_components=2)
-    #     proj = model.fit_transform(data)
-    #
-    #     ax = plt.gca()
-    #
-    #     proj = model.fit_transform(data)
-    #     ax.plot(proj[:, 0], proj[:, 1], '.k')
-
     def dimensionality_reduction(self):
         # 2 approaches: apply dimensionality reduction on images or on codes obtained from the autoencoder's latent space
         x, y, images = read_all_images()
-        images = self.reshape_images_pca(images, self.image_width, self.image_height)
+        images = self.reshape_images_pca(images)
         images = images/255
         #latent_codes = get_latent_codes(images)
         #pca2(images)

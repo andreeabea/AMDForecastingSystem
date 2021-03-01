@@ -17,7 +17,7 @@ class CodeHandler:
         self.image_width = 256
         self.image_height = 256
 
-        self.model = tf.keras.models.load_model('D:\\Licenta\\licenta\\models\\autoencoder256-original-sgm.h5')
+        self.model = tf.keras.models.load_model('D:\\Licenta\\licenta\\models\\autoencoder256-best.h5')
 
         self.model.summary()
 
@@ -29,7 +29,7 @@ class CodeHandler:
 
         return latent_codes
 
-    # not working
+    # TODO: not working - to predict next image in sequence
     def decode(self, latent_codes):
         encoder_output = self.model.get_layer("encoded").output
         encoder_model = Model(self.model.input, encoder_output)
@@ -55,6 +55,7 @@ class CodeHandler:
 
     def get_test_images(self):
         testX = []
+        # TODO: open file dialog to choose image
         image = Image.open("./data/Pacient 3/Vizita 2 - 05.12.2019/OD/60542CD0.tif").convert("L")
 
         # resize img
@@ -79,6 +80,7 @@ class CodeHandler:
             predictedImage.show("prediction")
             input()
 
+    # code source: https://keras.io/examples/vision/grad_cam/
     def get_gradcam_heatmap(self, images):
         # First, we create a model that maps the input image to the activations
         # of the last conv layer
@@ -154,11 +156,11 @@ class CodeHandler:
         # Display Grad CAM
         superimposed_img.show("gradcam heatmap")
 
+
 if __name__ == '__main__':
     code_handler = CodeHandler()
 
     test = code_handler.get_test_images()
-    #code_handler.reconstruct_images(test)
+    code_handler.reconstruct_images(test)
 
-    #code_handler.compute_activation_map(test)
     code_handler.get_gradcam_heatmap(test)

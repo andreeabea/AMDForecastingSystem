@@ -15,7 +15,7 @@ from data_layer.build_dataset import split_data
 class Autoencoder:
 
     def __init__(self, latent_dim=256):
-        # initially tried with 16
+        # initially tried with 16, but it was too small
         self.latent_dim = latent_dim
 
         self.trainX, self.validX, self.testX = split_data()
@@ -28,6 +28,7 @@ class Autoencoder:
 
         self.model = self.build_autoencoder()
 
+    # autoencoder taken from: https://github.com/HelloJahid/Biomedical-Image-Denoising/ and slightly changed
     def build_autoencoder(self):
         # define model
         input_layer = Input(self.input_shape)
@@ -106,6 +107,7 @@ class Autoencoder:
             tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
         ]
 
+        # Adam performed better than SGD
         self.model.compile(loss='mean_squared_error',
                            optimizer=Adam(lr=0.0001, beta_1=0.5, decay=1e-5),
                            metrics=['mean_squared_error'])
