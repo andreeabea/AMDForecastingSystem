@@ -1,223 +1,101 @@
-# import the necessary packages
-import os
-from xml.dom import minidom
+import re
 
-from PIL import Image, ImageOps
-
-import config
-import numpy as np
-
-from experiments.code_handler import CodeHandler
-from datetime import datetime
+import pandas as pd
 
 
-def create_sequences(eye_images, nb_features=257):
-    # imagesX[i] will contain current image, imagesY[i] the next image in the sequence after imagesX[i]
-    imagesX = []
-    imagesY = []
-    for i in range(len(eye_images) - 1):
-        imagesX.append(eye_images[i])
-        imagesY.append(eye_images[i+1])
+class DatasetBuilder:
 
-    imagesX = np.array(imagesX)
-    imagesY = np.array(imagesY)
-    imagesX = imagesX.reshape(-1, nb_features)
-    imagesY = imagesY.reshape(-1, nb_features)
+    def __init__(self):
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+        pd.options.display.float_format = '{:,.2f}'.format
 
-    return imagesX, imagesY
+        xls = pd.ExcelFile(r"DMLVAVcuID.xls")
+        self.VA_sheet = xls.parse(0, header=None)
+        self.data = None
 
+    # read chunks of size 6 from .csv
+    def flow_from_df(self, chunk_size: int = 6):
+        for start_row in range(0, self.VA_sheet.shape[0], chunk_size):
+            end_row = min(start_row + chunk_size, self.VA_sheet.shape[0])
+            yield self.VA_sheet.iloc[start_row:end_row, :]
 
-def read_images_lstm(eyeData=None):
-    # compute input data for LSTM model
-    imagesX = []
-    imagesY = []
-    first = True
-    x = -1
-    y = -1
+    # convert VA to decimal representation
+    def convert_Snellen_to_decimal(self, visualAcuity):
+        # if interval choose median value
+        if '-' in visualAcuity:
+            f1, f2 = visualAcuity.split('-')
+            if f1 is not '' and f2 is not '':
+                num1, denom1 = f1.split('/')
+                num2, denom2 = f2.split('/')
+                visualAcuity = (float(num1) / int(denom1) + float(num2) / int(denom2)) / 2
+        else:
+            if visualAcuity is not '' and visualAcuity != '0':
+                num, denom = visualAcuity.split('/')
+                visualAcuity = float(num) / int(denom)
 
-    code_handler = CodeHandler()
+        return visualAcuity
 
-    for patient in os.scandir(config.ORIG_INPUT_DATASET):
-        visits = len(list(os.scandir(patient)))
-        # do not consider sequences with just 1 visit
-        if (visits <= 1):
-            continue
+    def get_visual_acuity_data(self):
+        get_chunk = self.flow_from_df()
+        chunk = next(get_chunk)
 
-        left_eye_images = []
-        right_eye_images = []
+        data = pd.DataFrame()
+        index = 0
 
-        left_eye_va = []
-        right_eye_va = []
+        while True:
+            try:
+                patientID = chunk.iloc[1][1]
 
-        for visit in os.scandir(patient):
-            date = datetime.strptime(visit.name.split("- ")[1], '%d.%m.%Y')
-            for eye in os.scandir(visit):
-                # the scan of the retina fundus of the eye will not be added
-                fundusImgPath = ""
-                for file in os.scandir(eye):
-                    if file.path.endswith(".xml"):
-                        xmlfile = minidom.parse(file.path)
-                        patientID = xmlfile.getElementsByTagName('ID')[0].firstChild.nodeValue
-                        fundusImgPath = xmlfile.getElementsByTagName('ExamURL')[0].firstChild.nodeValue.rsplit("\\", 1)[1]
-                for imageFile in os.scandir(eye):
-                    # initially: fundusImgPath not in imageFile.name
-                    if imageFile.path.endswith(".tif") and fundusImgPath not in imageFile.name:
-                        image = Image.open(imageFile.path).convert("L")
-                        # resize img
-                        image = np.array(image.resize((256, 256), Image.ANTIALIAS))
-                        # for the first version without resizing the images
-                        if first:
-                            x = image.shape[0]
-                            y = image.shape[1]
-                            first = False
-                        if image.shape[0] == x and image.shape[1] == y:
-                            image = image.reshape(x, y, 1)
-                            if "OS" in eye.name:
-                                if eyeData is not None:
-                                    visual_acuity = find_visual_acuity(eyeData, patientID, "OS", date)
-                                    if visual_acuity >= 0:
-                                        left_eye_va.append(visual_acuity)
-                                        left_eye_images.append(image)
-                                else:
-                                    left_eye_images.append(image)
-                            else:
-                                if eyeData is not None:
-                                    visual_acuity = find_visual_acuity(eyeData, patientID, "OD", date)
-                                    if visual_acuity >= 0:
-                                        right_eye_va.append(visual_acuity)
-                                        right_eye_images.append(image)
-                                else:
-                                    right_eye_images.append(image)
-                        break
+                # perform data cleaning and solve inconsistencies
+                for i in range(2, 19):
+                    date = chunk.iloc[3][i]
+                    visualAcuityR = chunk.iloc[4][i]
+                    visualAcuityL = chunk.iloc[5][i]
 
-        if len(left_eye_images) > 1 and len(right_eye_images) > 1:
-            left_eye_images = reshape_images(left_eye_images, x, y)
-            left_eye_images = left_eye_images / 255
-            right_eye_images = reshape_images(right_eye_images, x, y)
-            right_eye_images = right_eye_images / 255
+                    if pd.isna(date) or date is None or date is '':
+                        continue
 
-            left_eye_code_sequences = code_handler.get_latent_codes(left_eye_images)
-            right_eye_code_sequences = code_handler.get_latent_codes(right_eye_images)
+                    # remove letters from visual acuity fields and convert fractions to float
+                    visualAcuityR = re.sub('[^0-9/-]', '', str(visualAcuityR))
+                    visualAcuityL = re.sub('[^0-9/-]', '', str(visualAcuityL))
 
-            if eyeData is not None:
-                left_eye_code_sequences = append_va_to_features(left_eye_code_sequences, left_eye_va)
-                right_eye_code_sequences = append_va_to_features(right_eye_code_sequences, right_eye_va)
+                    visualAcuityR = self.convert_Snellen_to_decimal(visualAcuityR)
+                    visualAcuityL = self.convert_Snellen_to_decimal(visualAcuityL)
 
-            left_eye_imagesX, left_eye_imagesY = create_sequences(left_eye_code_sequences.tolist())
-            right_eye_imagesX, right_eye_imagesY = create_sequences(right_eye_code_sequences.tolist())
-            imagesX.append(left_eye_imagesX)
-            imagesX.append(right_eye_imagesX)
-            imagesY.append(left_eye_imagesY)
-            imagesY.append(right_eye_imagesY)
+                    if visualAcuityL is not '':
+                        newEntryL = pd.DataFrame({'ID': [str(patientID) + 'OS'],
+                                                  'Date': [date],
+                                                  'VA': [visualAcuityL]})
+                        data = data.append(newEntryL)
+                        index += 1
 
-    return x, y, imagesX, imagesY
+                    if visualAcuityR is not '':
+                        newEntryR = pd.DataFrame({'ID': [str(patientID) + 'OD'],
+                                                  'Date': [date],
+                                                  'VA': [visualAcuityR]})
+                        data = data.append(newEntryR)
+                        index += 1
+                #print(chunk)
+                chunk = next(get_chunk)
+            except StopIteration:
+                break
+
+        data = data.set_index('ID')
+        data = data.sort_values(['ID', 'Date'], ascending=[True, True])
+        self.data = data
+
+    def format_timestamps(self):
+        # the time intervals can be represented in number of days/weeks/months
+        # best choice would be months according to ophthalmologists
+        # denominator = 7 => nb of weeks, denominator = 1 => nb_of days, denominator = 30 => nb of months
+        groups = self.data.groupby(['ID'])
+        self.data['Timestamp'] = groups.transform('min')
+        self.data['Timestamp'] = (self.data['Date'] - self.data['Timestamp']).dt.days/30
 
 
-def find_visual_acuity(eyeData, patientID, eye, date):
-    id = patientID + eye
-    for df in eyeData:
-        if df['New ID'].iloc[0] == id:
-            for i in range(len(df.index)):
-                if df['Date'].iloc[i] == date:
-                    return df['Eye'].iloc[i]
-    return -1
-
-
-def append_va_to_features(features, va_list):
-    new_features = []
-    for i in range(len(features)):
-        new = np.append(features[i], va_list[i])
-        new_features.append(new)
-
-    return np.array(new_features)
-
-# get images to feed autoencoder
-def read_all_images():
-    images = []
-    x = 256
-    y = 256
-
-    for patient in os.scandir(config.ORIG_INPUT_DATASET):
-        for visit in os.scandir(patient):
-            for eye in os.scandir(visit):
-                fundusImgPath = ""
-                for file in os.scandir(eye):
-                    if file.path.endswith(".xml"):
-                        xmlfile = minidom.parse(file.path)
-                        fundusImgPath = xmlfile.getElementsByTagName('ExamURL')[0].firstChild.nodeValue.rsplit("\\", 1)[1]
-                for imageFile in os.scandir(eye):
-                    if imageFile.path.endswith(".tif") and fundusImgPath not in imageFile.name:
-                        with Image.open(imageFile.path) as image:
-                            try:
-                                image = ImageOps.grayscale(image)
-                                #width, height = image.size
-                                # image.show("initial")
-                                #image = crop_retina_image(image, width, height)
-                                # image.show("cropped")
-                                # resize img
-                                image = np.array(image.resize((x, y), Image.ANTIALIAS))
-                                image = image.reshape(x, y, 1)
-                                images.append(image)
-                            except Exception:
-                                print("Cannot convert" + imageFile.name)
-
-    return x, y, images
-
-
-def reshape_images(images, x, y):
-    images = np.vstack(images)
-    images = images.reshape(-1, x, y, 1)
-    return images
-
-
-def split_data_lstm(scaler=None, eyeData=None, dataX=None, dataY=None):
-    if dataX is None and dataY is None and eyeData is None:
-        # data is not given and VA should not be included
-        x, y, dataX, dataY = read_images_lstm()
-    else:
-        if dataX is None and dataY is None and eyeData is not None:
-            # include VA data from .csv
-            x, y, dataX, dataY = read_images_lstm(eyeData)
-
-    # otherwise (if dataX and dataY are not None) data is passed as parameters
-
-    dataX = np.vstack(dataX)
-    dataY = np.vstack(dataY)
-
-    # if data needs to be scaled/normalized
-    if scaler is not None:
-        dataX = scaler.fit_transform(dataX)
-        dataY = scaler.fit_transform(dataY)
-
-    # compute the training split
-    i = int(len(dataX) * config.TRAIN_SPLIT)
-    trainX = dataX[:i]
-    trainY = dataY[:i]
-
-    # obtain the validation and testing splits
-    valid = int(len(dataX) * config.VAL_SPLIT)
-    validX = dataX[i:i+valid]
-    validY = dataY[i:i+valid]
-
-    testX = dataX[i+valid:]
-    testY = dataY[i+valid:]
-
-    return trainX, trainY, validX, validY, testX, testY
-
-
-# split data for the autoencoder
-def split_data():
-    x, y, images = read_all_images()
-    images = reshape_images(images, x, y)
-
-    # compute the training split
-    i = int(len(images) * config.TRAIN_SPLIT)
-    train = images[:i]
-
-    # obtain the validation and testing splits
-    validLen = int(len(images) * config.VAL_SPLIT)
-    valid = images[i:i+validLen]
-
-    test = images[i+validLen:]
-
-    return train, valid, test
+if __name__ == '__main__':
+    data_builder = DatasetBuilder()
+    data_builder.get_visual_acuity_data()
+    data_builder.format_timestamps()
+    print(data_builder.data)

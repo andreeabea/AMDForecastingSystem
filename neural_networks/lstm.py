@@ -6,7 +6,7 @@ from tensorflow.keras import backend as K
 
 import matplotlib.pyplot as plt
 
-from data_layer.build_dataset import split_data_lstm
+from data_layer.build_dataset_v1 import split_data_lstm
 import numpy as np
 
 from experiments.visual_acuity_analysis import VisualAcuityAnalysis

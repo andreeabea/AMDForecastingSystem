@@ -13,7 +13,7 @@ from tslearn.preprocessing import TimeSeriesResampler
 from tslearn.utils import to_time_series_dataset
 
 import config
-from data_layer.build_dataset import read_all_images, reshape_images
+from data_layer.build_dataset_v1 import read_all_images, reshape_images
 from code_handler import CodeHandler
 
 

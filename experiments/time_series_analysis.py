@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import pearsonr
 
-from data_layer.build_dataset import create_sequences, find_visual_acuity, append_va_to_features
+from data_layer.build_dataset_v1 import create_sequences, find_visual_acuity, append_va_to_features
 from neural_networks.lstm import Lstm
 
 from visual_acuity_analysis import VisualAcuityAnalysis

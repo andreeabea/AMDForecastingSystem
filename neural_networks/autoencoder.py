@@ -9,7 +9,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import backend
 import numpy as np
 
-from data_layer.build_dataset import split_data
+from data_layer.build_dataset_v1 import split_data
 
 
 class Autoencoder:
