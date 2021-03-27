@@ -1,5 +1,4 @@
 import tensorflow as tf
-from sklearn.preprocessing import MinMaxScaler, RobustScaler, Normalizer
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
@@ -10,7 +9,7 @@ import matplotlib.pyplot as plt
 from data_layer.build_dataset import split_data_lstm
 import numpy as np
 
-from visual_acuity_analysis import VisualAcuityAnalysis
+from experiments.visual_acuity_analysis import VisualAcuityAnalysis
 
 
 class Lstm:
@@ -19,10 +18,12 @@ class Lstm:
         self.nb_features = nb_features
         self.nb_sequences = nb_sequences
 
-        #self.scaler = MinMaxScaler(feature_range=(0, 1))
+        #self.scaler = Normalizer()
+
+        self.scaler = None
 
         if dataX is not None and dataY is not None:
-            self.trainX, self.trainY, self.validX, self.validY, self.testX, self.testY = split_data_lstm(None, None, dataX, dataY)
+            self.trainX, self.trainY, self.validX, self.validY, self.testX, self.testY = split_data_lstm(self.scaler, None, dataX, dataY)
         else:
             va_analysis = VisualAcuityAnalysis()
             eyeData = va_analysis.get_va_df()
@@ -75,7 +76,7 @@ class Lstm:
         plt.legend()
         plt.show()
 
-        plt.savefig('../plots/loss-lstm.png')
+        #plt.savefig('../plots/loss-lstm.png')
 
     def evaluate_model(self):
         # evaluate model

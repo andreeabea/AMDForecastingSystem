@@ -7,7 +7,7 @@ from PIL import Image, ImageOps
 import config
 import numpy as np
 
-from code_handler import CodeHandler
+from experiments.code_handler import CodeHandler
 from datetime import datetime
 
 

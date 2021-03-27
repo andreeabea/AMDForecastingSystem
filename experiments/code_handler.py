@@ -17,7 +17,7 @@ class CodeHandler:
         self.image_width = 256
         self.image_height = 256
 
-        self.model = tf.keras.models.load_model('D:\\Licenta\\licenta\\models\\autoencoder256-best.h5')
+        self.model = tf.keras.models.load_model('/models/autoencoder256-best.h5')
 
         self.model.summary()
 
@@ -56,7 +56,7 @@ class CodeHandler:
     def get_test_images(self):
         testX = []
         # TODO: open file dialog to choose image
-        image = Image.open("./data/Pacient 3/Vizita 2 - 05.12.2019/OD/60542CD0.tif").convert("L")
+        image = Image.open("../data/Pacient 3/Vizita 2 - 05.12.2019/OD/60542CD0.tif").convert("L")
 
         # resize img
         image = np.array(image.resize((self.image_width, self.image_height), Image.ANTIALIAS))

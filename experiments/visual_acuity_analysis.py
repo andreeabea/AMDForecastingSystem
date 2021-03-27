@@ -2,11 +2,9 @@ import re
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
 # reorganise and clean data
-from image_analysis import ImageAnalysis
-from data_layer.build_dataset import create_sequences
+from experiments.image_analysis import ImageAnalysis
 
 
 class VisualAcuityAnalysis:
@@ -37,7 +35,7 @@ class VisualAcuityAnalysis:
         return visualAcuity
 
     def get_visual_acuity_data(self):
-        inputData = pd.read_csv("D:\\Licenta\\licenta\\data_layer\\DMLVAVcuID.csv", nrows=282, header=None)
+        inputData = pd.read_csv("/data_layer/DMLVAVcuID.csv", nrows=282, header=None)
 
         get_chunk = self.flow_from_df(inputData)
         chunk = next(get_chunk)
