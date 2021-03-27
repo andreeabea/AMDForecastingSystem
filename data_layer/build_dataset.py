@@ -1,6 +1,8 @@
 import re
 
 import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 class DatasetBuilder:
@@ -92,10 +94,38 @@ class DatasetBuilder:
         groups = self.data.groupby(['ID'])
         self.data['Timestamp'] = groups.transform('min')
         self.data['Timestamp'] = (self.data['Date'] - self.data['Timestamp']).dt.days/30
+        self.data['Timestamp'] = self.data['Timestamp'].values.astype(np.float)
+        self.data['VA'] = self.data['VA'].values.astype(np.float)
 
+    def resample_time_series(self):
+        # mean_len = 0
+        # nb_series = len(self.data.groupby('ID'))
+        # for entrynb, entry in self.data.groupby('ID'):
+        #     mean_len += entry.index.size
+        # mean_len = round(float(mean_len)/nb_series)
+        self.data['ID'] = self.data.index
+        self.data.index = self.data['Date']
+        del self.data['Date']
+        self.data = self.data.groupby('ID').resample('M').mean().interpolate()
+
+    def dtw_kmeans_clustering(self, sequences):
+        sz = 16
+        # sequences = TimeSeriesResampler(sz=sz).fit_transform(sequences)
+        sequences = to_time_series_dataset(sequences)
+        km = TimeSeriesKMeans(n_clusters=2, metric="dtw")
+        labels = km.fit_predict(sequences)
+
+        return labels
 
 if __name__ == '__main__':
     data_builder = DatasetBuilder()
     data_builder.get_visual_acuity_data()
     data_builder.format_timestamps()
+    #print(data_builder.data)
+    #data_builder.data.plot.scatter(x='Timestamp', y='VA')
+    #plt.show()
+    data_builder.resample_time_series()
     print(data_builder.data)
+
+    arr = data_builder.data.groupby('ID').apply(pd.DataFrame.to_numpy).to_numpy()
+    print(arr.shape)
