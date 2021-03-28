@@ -4,7 +4,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-from clustering import dtw_kmeans_clustering, dtw_clustering, split_data, knn_classifier, svc_classifier
+from classification import learning_shapelets_classifier
+from clustering import dtw_kmeans_clustering, dtw_clustering, kernel_kmeans_clustering
+from regression import svr_regression
 
 
 class DatasetBuilder:
@@ -50,6 +52,9 @@ class DatasetBuilder:
         while True:
             try:
                 patientID = chunk.iloc[1][1]
+
+                if patientID == '252/1911':
+                    patientID = '252'
 
                 # perform data cleaning and solve inconsistencies
                 for i in range(2, 19):
@@ -124,8 +129,8 @@ if __name__ == '__main__':
     #plt.show()
 
     data_builder.resample_time_series()
-    #print(data_builder.data)
+    print(data_builder.data)
 
-    svc_classifier(data_builder.data)
+    svr_regression(data_builder.data)
     #dtw_clustering(data_builder.data, 2)
 

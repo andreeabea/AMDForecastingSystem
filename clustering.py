@@ -1,11 +1,8 @@
 from trendypy.trendy import Trendy
-from tslearn.clustering import TimeSeriesKMeans
-from tslearn.neighbors import KNeighborsTimeSeriesClassifier
-from tslearn.svm import TimeSeriesSVR, TimeSeriesSVC
+from tslearn.clustering import TimeSeriesKMeans, KernelKMeans
 from tslearn.utils import to_time_series_dataset
 import matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
 
 
 def dtw_kmeans_clustering(data, nb_clusters):
@@ -26,48 +23,13 @@ def dtw_clustering(data, nb_clusters):
     compute_accuracy(data, labels)
 
 
-def split_data(data):
-    labels = np.array(get_actual_labels(data))
-    mask = np.random.rand(len(labels)) < 0.8
-    trainY = labels[mask]
-    testY = labels[~mask]
+def kernel_kmeans_clustering(data, nb_clusters):
+    sequences = data.groupby('ID').apply(pd.DataFrame.to_numpy).to_numpy().tolist()
+    sequences = to_time_series_dataset(sequences)
+    gak_km = KernelKMeans(n_clusters=nb_clusters, kernel="gak")
+    labels = gak_km.fit_predict(sequences)
 
-    i = 0
-    trainX = []
-    testX = []
-    for nb, group in data.groupby('ID'):
-        if mask[i] == 1:
-            trainX.append(group)
-        else:
-            testX.append(group)
-        i += 1
-
-    trainX = pd.concat(trainX)
-    testX = pd.concat(testX)
-
-    trainX = trainX.groupby('ID').apply(pd.DataFrame.to_numpy).to_numpy().tolist()
-    trainX = to_time_series_dataset(trainX)
-
-    testX = testX.groupby('ID').apply(pd.DataFrame.to_numpy).to_numpy().tolist()
-    testX = to_time_series_dataset(testX)
-
-    return trainX, trainY, testX, testY
-
-
-def knn_classifier(data, nb_neighbors):
-    knn = KNeighborsTimeSeriesClassifier(n_neighbors=nb_neighbors, metric="dtw")
-    trainX, trainY, testX, testY = split_data(data)
-    print(knn.fit(trainX, trainY).score(testX, testY))
-
-
-def svr_regression(data):
-    reg = TimeSeriesSVR(kernel="gak", gamma="auto")
-
-
-def svc_classifier(data):
-    svc = TimeSeriesSVC(kernel="gak", gamma="auto", probability=True)
-    trainX, trainY, testX, testY = split_data(data)
-    print(svc.fit(trainX, trainY).score(testX, testY))
+    compute_accuracy(data, labels)
 
 
 def get_actual_labels(data):
