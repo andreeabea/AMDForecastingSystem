@@ -1,22 +1,17 @@
 import re
 
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
-
-from classification import learning_shapelets_classifier
-from clustering import dtw_kmeans_clustering, dtw_clustering, kernel_kmeans_clustering
-from regression import svr_regression
 
 
 class DatasetBuilder:
 
-    def __init__(self):
+    def __init__(self, path):
         pd.set_option('display.max_rows', None)
         pd.set_option('display.max_columns', None)
         pd.options.display.float_format = '{:,.2f}'.format
 
-        xls = pd.ExcelFile(r"DMLVAVcuID.xls")
+        xls = pd.ExcelFile(path)
         self.VA_sheet = xls.parse(0, header=None)
         self.data = None
 
@@ -118,19 +113,3 @@ class DatasetBuilder:
         self.data = self.data.reset_index(level='ID')
         self.data = self.data.groupby('ID').resample('M').mean().interpolate()
         del self.data['Timestamp']
-
-
-if __name__ == '__main__':
-    data_builder = DatasetBuilder()
-    data_builder.get_visual_acuity_data()
-    data_builder.format_timestamps()
-    #print(data_builder.data)
-    #data_builder.data.plot.scatter(x='Timestamp', y='VA')
-    #plt.show()
-
-    data_builder.resample_time_series()
-    print(data_builder.data)
-
-    svr_regression(data_builder.data)
-    #dtw_clustering(data_builder.data, 2)
-
