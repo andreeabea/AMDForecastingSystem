@@ -51,13 +51,13 @@ def svr_regression(data):
     print(svr.fit(trainX, trainY).score(testX, testY))
 
 
-def generate_timeseries(data, size=2):
+def generate_timeseries(data, size=1):
     X = []
     Y = []
 
-    sequences = data_builder.data.groupby('ID').apply(pd.DataFrame.to_numpy).to_numpy().tolist()
+    sequences = data.groupby('ID').apply(pd.DataFrame.to_numpy).to_numpy().tolist()
     for i in range(len(sequences)):
-        if len(sequences[i]) > 2:
+        if len(sequences[i]) > size:
             generator = TimeseriesGenerator(sequences[i], sequences[i], length=size)
             x, y = generator[0]
             X.append(x)
@@ -97,11 +97,11 @@ def voting_regression(data):
     cv = KFold(n_splits=10)
     n_scores = cross_val_score(gbr, X, Y, cv=cv, n_jobs=-1)
     print('Accuracy: ' + str(np.mean(n_scores)))
-    plot_feature_importances(gbr.fit(X, Y))
+    plot_feature_importances(gbr.fit(X, Y), X.shape[1])
 
 
-def plot_feature_importances(regressor):
-    feature_names = ['VA1', 'treatment1', 'time1', 'VA2', 'treatment2', 'time2', 'next_visit']
+def plot_feature_importances(regressor, nb_features):
+    feature_names = list(range(0, nb_features))
     sorted_ids = np.argsort(regressor.feature_importances_)
     pos = np.arange(sorted_ids.shape[0]) + .5
     fig = plt.figure(figsize=(12, 6))
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     data_builder.get_visual_acuity_data()
     data_builder.format_timestamps()
 
-    data_builder.resample_time_series()
+    #data_builder.resample_time_series()
     print(data_builder.data)
 
     voting_regression(data_builder.data)
