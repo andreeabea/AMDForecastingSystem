@@ -2,6 +2,9 @@ import re
 
 import pandas as pd
 import numpy as np
+import xlrd
+from xlutils.copy import copy
+from xlwt import Style
 
 
 class DatasetBuilder:
@@ -11,9 +14,27 @@ class DatasetBuilder:
         pd.set_option('display.max_columns', None)
         pd.options.display.float_format = '{:,.2f}'.format
 
+        #DatasetBuilder.handle_bold_cells(path)
         xls = pd.ExcelFile(path)
         self.VA_sheet = xls.parse(0, header=None)
         self.data = None
+
+
+    @staticmethod
+    def handle_bold_cells(path):
+        workbook = xlrd.open_workbook(path, formatting_info=True)
+        sheet = workbook.sheet_by_index(0)
+        new_wb = copy(workbook)
+        for row in range(0, sheet.nrows):
+            for col in range(0, sheet.ncols):
+                cell = sheet.cell(row, col)
+                format = workbook.xf_list[cell.xf_index]
+                if workbook.font_list[format.font_index].weight == 700:
+                    print(str(cell.value) + " t")
+                    new_wb.get_sheet(0).write(row, col, str(cell.value) + " t", Style.easyxf("font: bold on;"))
+
+        new_wb.save(path)
+
 
     # read chunks of size 6 from .csv
     def flow_from_df(self, chunk_size: int = 6):
@@ -31,11 +52,23 @@ class DatasetBuilder:
                 num2, denom2 = f2.split('/')
                 visualAcuity = (float(num1) / int(denom1) + float(num2) / int(denom2)) / 2
         else:
-            if visualAcuity is not '' and visualAcuity != '0':
+            if visualAcuity is not '' and visualAcuity != '0' and visualAcuity != 't':
                 num, denom = visualAcuity.split('/')
                 visualAcuity = float(num) / int(denom)
 
         return visualAcuity
+
+
+    def check_treatment(self, visualAcuity):
+        try:
+            if pd.notna(visualAcuity) and 't' in visualAcuity:
+                treatment = 1
+            else:
+                treatment = 0
+        except TypeError:
+            treatment = 0
+        return treatment
+
 
     def get_visual_acuity_data(self):
         get_chunk = self.flow_from_df()
@@ -60,6 +93,9 @@ class DatasetBuilder:
                     if pd.isna(date) or date is None or date is '':
                         continue
 
+                    treatmentR = self.check_treatment(visualAcuityR)
+                    treatmentL = self.check_treatment(visualAcuityL)
+
                     # remove letters from visual acuity fields and convert fractions to float
                     visualAcuityR = re.sub('[^0-9/-]', '', str(visualAcuityR))
                     visualAcuityL = re.sub('[^0-9/-]', '', str(visualAcuityL))
@@ -70,14 +106,16 @@ class DatasetBuilder:
                     if visualAcuityL is not '':
                         newEntryL = pd.DataFrame({'ID': [str(patientID) + 'OS'],
                                                   'Date': [date],
-                                                  'VA': [visualAcuityL]})
+                                                  'VA': [visualAcuityL],
+                                                  'Treatment': [treatmentL]})
                         data = data.append(newEntryL)
                         index += 1
 
                     if visualAcuityR is not '':
                         newEntryR = pd.DataFrame({'ID': [str(patientID) + 'OD'],
                                                   'Date': [date],
-                                                  'VA': [visualAcuityR]})
+                                                  'VA': [visualAcuityR],
+                                                  'Treatment': [treatmentR]})
                         data = data.append(newEntryR)
                         index += 1
                 #print(chunk)
@@ -94,7 +132,7 @@ class DatasetBuilder:
         # best choice would be months according to ophthalmologists
         # denominator = 7 => nb of weeks, denominator = 1 => nb_of days, denominator = 30 => nb of months
         groups = self.data.groupby(['ID'])
-        self.data['Timestamp'] = groups.transform('min')
+        self.data['Timestamp'] = groups.transform('min').loc[:, 'Date':'Date']
         self.data['Timestamp'] = (self.data['Date'] - self.data['Timestamp']).dt.days/30
         self.data['Timestamp'] = self.data['Timestamp'].values.astype(np.float)
         self.data['VA'] = self.data['VA'].values.astype(np.float)
@@ -111,5 +149,7 @@ class DatasetBuilder:
         #     mean_len += entry.index.size
         # mean_len = round(float(mean_len)/nb_series)
         self.data = self.data.reset_index(level='ID')
-        self.data = self.data.groupby('ID').resample('M').mean().interpolate()
+        self.data = self.data.groupby('ID').resample('M').mean()
+        self.data['Treatment'] = self.data['Treatment'].fillna(0)
+        self.data = self.data.interpolate()
         del self.data['Timestamp']

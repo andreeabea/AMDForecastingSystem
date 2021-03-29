@@ -67,10 +67,11 @@ def generate_timeseries(data, size=2):
     Y = np.vstack(Y)
 
     # split target visual acuity and move the future timestamp to X
-    future_timestamp_array = Y[:, 1:]
+    future_timestamp_array = Y[:, 2:]
     Y = Y[:, :1]
     X = X.reshape(-1, X.shape[1] * X.shape[2])
-    X = np.hstack((X, future_timestamp_array))
+    if future_timestamp_array.shape[1] != 0:
+        X = np.hstack((X, future_timestamp_array))
 
     return X, Y.reshape(-1)
 
@@ -100,7 +101,7 @@ def voting_regression(data):
 
 
 def plot_feature_importances(regressor):
-    feature_names = ['VA1', 'time1', 'VA2', 'time2', 'next_visit']
+    feature_names = ['VA1', 'treatment1', 'time1', 'VA2', 'treatment2', 'time2', 'next_visit']
     sorted_ids = np.argsort(regressor.feature_importances_)
     pos = np.arange(sorted_ids.shape[0]) + .5
     fig = plt.figure(figsize=(12, 6))
@@ -116,7 +117,7 @@ if __name__ == '__main__':
     data_builder.get_visual_acuity_data()
     data_builder.format_timestamps()
 
-    #data_builder.resample_time_series()
+    data_builder.resample_time_series()
     print(data_builder.data)
 
     voting_regression(data_builder.data)
