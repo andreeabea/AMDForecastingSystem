@@ -3,7 +3,6 @@ import os
 from datetime import datetime
 from xml.dom import minidom
 
-from keras_preprocessing.sequence import TimeseriesGenerator
 from trendypy.trendy import Trendy
 from tslearn.clustering import TimeSeriesKMeans
 from tslearn.preprocessing import TimeSeriesResampler
@@ -13,6 +12,7 @@ import config
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import pearsonr
+from scipy.stats import spearmanr
 
 from data_layer.build_dataset_v1 import create_sequences, find_visual_acuity, append_va_to_features
 from neural_networks.lstm import Lstm
@@ -116,8 +116,8 @@ class RetinaFeatureAnalysis:
         j = 0
         while i < len_feature1 and j < len_feature2:
             if len(feature1[i]) == len(feature2[j]):
-                plt.scatter(feature1[i], feature2[i])
-                r, p = pearsonr(feature1[i], feature2[j])
+                #plt.scatter(feature1[i], feature2[i])
+                r, p = spearmanr(feature1[i], feature2[j])
                 if math.isnan(r) == False:
                     correlation += r
                     valid_series += 1
@@ -229,35 +229,10 @@ class RetinaFeatureAnalysis:
             for j in range(nb_zones):
                 sequences1 = retina_analysis.get_feature_sequences(feature_names[i], j, eyeData)
                 sequences2 = retina_analysis.get_feature_sequences(feature_names[i], j, eyeData, include_va=True)
-                sequences, va_sequences = retina_analysis.extract_va_list(sequences2)
+                sequences, va_sequences = retina_analysis.extract_last_feature_list(sequences2)
                 print("VA correlation with " + feature_names[i] + " in zone " + str(j))
                 retina_analysis.find_correlation(sequences1, va_sequences)
                 #input()
-
-    # TODO: not working!
-    def get_all_features(self):
-        feature_names = [RetinaFeatureAnalysis.THICKNESS_FEATURE,
-                         RetinaFeatureAnalysis.VOLUME_FEATURE,
-                         RetinaFeatureAnalysis.CENTRAL_AVG_THICKNESS_FEATURE,
-                         RetinaFeatureAnalysis.MIN_CENTRAL_THICKNESS_FEATURE,
-                         RetinaFeatureAnalysis.MAX_CENTRAL_THICKNESS_FEATURE,
-                         RetinaFeatureAnalysis.TOTAL_VOLUME_FEATURE]
-
-        sequences = []
-
-        for i in range(len(feature_names) - 1):
-            if i <= 1:
-                nb_zones = 9
-            else:
-                nb_zones = 1
-            for j in range(nb_zones):
-                sequences1 = retina_analysis.get_feature_sequences(feature_names[i], j, eyeData)
-                sequences = retina_analysis.concatenate_features(sequences, sequences1)
-
-        sequences2 = retina_analysis.get_feature_sequences(feature_names[-1], 0, eyeData, include_va=True)
-        sequences = retina_analysis.concatenate_features(sequences, sequences2)
-
-        return sequences
 
 
 if __name__ == '__main__':
@@ -267,27 +242,27 @@ if __name__ == '__main__':
 
     retina_analysis = RetinaFeatureAnalysis()
 
-    sequences1 = retina_analysis.get_feature_sequences(RetinaFeatureAnalysis.THICKNESS_FEATURE, 3, eyeData)
-    sequences2 = retina_analysis.get_feature_sequences(RetinaFeatureAnalysis.THICKNESS_FEATURE, 7, eyeData, True)
+    #sequences1 = retina_analysis.get_feature_sequences(RetinaFeatureAnalysis.THICKNESS_FEATURE, 3, eyeData)
+    #sequences2 = retina_analysis.get_feature_sequences(RetinaFeatureAnalysis.THICKNESS_FEATURE, 7, eyeData, True)
     # sequences, va_sequences = retina_analysis.extract_va_list(sequences2)
     #retina_analysis.find_correlation(sequences1, sequences2)
 
-    sequences = retina_analysis.concatenate_features(sequences1, sequences2)
+    #sequences = retina_analysis.concatenate_features(sequences1, sequences2)
 
-    sequences = retina_analysis.get_all_features()
+    retina_analysis.compute_correlations_with_va()
 
-    if isinstance(sequences[0][0], float):
-        nb_features = 1
-    else:
-        nb_features = len(sequences[0][0])
-
-    # create X and Y lists
-    dataX, dataY = retina_analysis.create_XY(sequences, nb_features)
-
-    lstm = Lstm(nb_features, 1, dataX, dataY)
-    lstm.train()
-
-    loss, prediction = lstm.evaluate_model()
+    # if isinstance(sequences[0][0], float):
+    #     nb_features = 1
+    # else:
+    #     nb_features = len(sequences[0][0])
+    #
+    # # create X and Y lists
+    # dataX, dataY = retina_analysis.create_XY(sequences, nb_features)
+    #
+    # lstm = Lstm(nb_features, 1, dataX, dataY)
+    # lstm.train()
+    #
+    # loss, prediction = lstm.evaluate_model()
 
     #labels = dtw_kmeans_clustering(sequences)
     #plot_sequences(sequences, labels)

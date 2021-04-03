@@ -1,11 +1,15 @@
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import GradientBoostingRegressor, VotingRegressor, AdaBoostRegressor
+from sklearn import linear_model, metrics
+from sklearn.ensemble import GradientBoostingRegressor, VotingRegressor, AdaBoostRegressor, ExtraTreesRegressor
 from sklearn.model_selection import KFold, cross_val_score
+from sklearn.svm import SVR
+from sklearn.tree import DecisionTreeRegressor
 
 from tslearn.svm import TimeSeriesSVR
 from tslearn.utils import to_time_series_dataset
 
+import config
 from data_layer.build_dataset import DatasetBuilder
 from keras.preprocessing.sequence import TimeseriesGenerator
 import matplotlib.pyplot as plt
@@ -46,12 +50,19 @@ def split_data(data):
 
 
 def svr_regression(data):
-    svr = TimeSeriesSVR(kernel="gak", gamma="auto")
-    trainX, trainY, testX, testY = split_data(data)
-    print(svr.fit(trainX, trainY).score(testX, testY))
+    #svr = TimeSeriesSVR(kernel="gak", gamma="auto")
+    #trainX, trainY, testX, testY = split_data(data)
+    #print(svr.fit(trainX, trainY).score(testX, testY))
+    X, Y = generate_timeseries(data, False)
+
+    gbr = SVR()
+    cv = KFold(n_splits=10)
+    n_scores = cross_val_score(gbr, X, Y, cv=cv, n_jobs=-1)
+    print('Accuracy: ' + str(np.mean(n_scores)))
+    plot_feature_importances(gbr.fit(X, Y), X.shape[1])
 
 
-def generate_timeseries(data, size=1):
+def generate_timeseries(data, include_timestamp=False, size=2):
     X = []
     Y = []
 
@@ -67,10 +78,11 @@ def generate_timeseries(data, size=1):
     Y = np.vstack(Y)
 
     # split target visual acuity and move the future timestamp to X
-    future_timestamp_array = Y[:, 2:]
+    if include_timestamp:
+        future_timestamp_array = Y[:, Y.shape[1] - 1:]
     Y = Y[:, :1]
     X = X.reshape(-1, X.shape[1] * X.shape[2])
-    if future_timestamp_array.shape[1] != 0:
+    if include_timestamp and future_timestamp_array.shape[1] != 0:
         X = np.hstack((X, future_timestamp_array))
 
     return X, Y.reshape(-1)
@@ -87,17 +99,38 @@ def train_test_split(X, Y):
            testX.reshape(-1, testX.shape[1]*testX.shape[2]), testY.reshape(-1)
 
 
-def voting_regression(data):
-    X, Y = generate_timeseries(data)
+def gradient_boosted_regression(data, include_timestamp=False):
+    X, Y = generate_timeseries(data, include_timestamp)
 
     gbr = GradientBoostingRegressor()
-    #abr = AdaBoostRegressor()
-    #er = VotingRegressor([('gb', gbr), ('ab', abr)])
-    #print(gbr.fit(trainX, trainY).score(testX, testY))
     cv = KFold(n_splits=10)
     n_scores = cross_val_score(gbr, X, Y, cv=cv, n_jobs=-1)
     print('Accuracy: ' + str(np.mean(n_scores)))
     plot_feature_importances(gbr.fit(X, Y), X.shape[1])
+
+
+def decisiontree_regression(data, include_timestamp=False):
+    X, Y = generate_timeseries(data, include_timestamp)
+
+    gbr = ExtraTreesRegressor()
+    cv = KFold(n_splits=10)
+    n_scores = cross_val_score(gbr, X, Y, cv=cv, n_jobs=-1)
+    print('Accuracy: ' + str(np.mean(n_scores)))
+    plot_feature_importances(gbr.fit(X, Y), X.shape[1])
+
+
+def lasso_regression(data, include_timestamp=False):
+    X, Y = generate_timeseries(data, include_timestamp)
+    clf = linear_model.Lasso(alpha=0.1)
+    cv = KFold(n_splits=10)
+    n_scores = cross_val_score(clf, X, Y, cv=cv, n_jobs=-1)
+    print('Accuracy: ' + str(np.mean(n_scores)))
+
+
+def voting_ensemble_regression(data):
+    abr = AdaBoostRegressor()
+    #er = VotingRegressor([('gb', gbr), ('ab', abr)])
+    #print(gbr.fit(trainX, trainY).score(testX, testY))
 
 
 def plot_feature_importances(regressor, nb_features):
@@ -112,12 +145,19 @@ def plot_feature_importances(regressor, nb_features):
     plt.show()
 
 
+def lstm_ensemble_regression():
+    return None
+
+
 if __name__ == '__main__':
-    data_builder = DatasetBuilder("./data_layer/DMLVAVcuID.xls")
-    data_builder.get_visual_acuity_data()
+    data_builder = DatasetBuilder(config.VISUAL_ACUITY_DATA_PATH)
+    data_builder.build_visual_acuity_df()
+    data_builder.add_retina_features()
     data_builder.format_timestamps()
 
-    #data_builder.resample_time_series()
+    data_builder.interpolate_OCT_features()
+    data_builder.resample_time_series()
     print(data_builder.data)
+    print(data_builder.data.shape)
 
-    voting_regression(data_builder.data)
+    gradient_boosted_regression(data_builder.data, True)

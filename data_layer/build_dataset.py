@@ -5,6 +5,9 @@ import numpy as np
 import xlrd
 from xlutils.copy import copy
 from xlwt import Style
+import matplotlib.pyplot as plt
+
+from oct_feature_extraction import OCTFeatureExtractor
 
 
 class DatasetBuilder:
@@ -14,11 +17,11 @@ class DatasetBuilder:
         pd.set_option('display.max_columns', None)
         pd.options.display.float_format = '{:,.2f}'.format
 
-        #DatasetBuilder.handle_bold_cells(path)
+        # DatasetBuilder.handle_bold_cells(path)
         xls = pd.ExcelFile(path)
         self.VA_sheet = xls.parse(0, header=None)
-        self.data = None
-
+        self.data = pd.DataFrame()
+        self.retina_features = []
 
     @staticmethod
     def handle_bold_cells(path):
@@ -34,7 +37,6 @@ class DatasetBuilder:
                     new_wb.get_sheet(0).write(row, col, str(cell.value) + " t", Style.easyxf("font: bold on;"))
 
         new_wb.save(path)
-
 
     # read chunks of size 6 from .csv
     def flow_from_df(self, chunk_size: int = 6):
@@ -58,7 +60,6 @@ class DatasetBuilder:
 
         return visualAcuity
 
-
     def check_treatment(self, visualAcuity):
         try:
             if pd.notna(visualAcuity) and 't' in visualAcuity:
@@ -69,8 +70,7 @@ class DatasetBuilder:
             treatment = 0
         return treatment
 
-
-    def get_visual_acuity_data(self):
+    def build_visual_acuity_df(self):
         get_chunk = self.flow_from_df()
         chunk = next(get_chunk)
 
@@ -80,6 +80,9 @@ class DatasetBuilder:
         while True:
             try:
                 patientID = chunk.iloc[1][1]
+
+                if patientID == 8615:
+                    patientID = '276'
 
                 if patientID == '252/1911':
                     patientID = '252'
@@ -118,7 +121,7 @@ class DatasetBuilder:
                                                   'Treatment': [treatmentR]})
                         data = data.append(newEntryR)
                         index += 1
-                #print(chunk)
+                # print(chunk)
                 chunk = next(get_chunk)
             except StopIteration:
                 break
@@ -133,23 +136,84 @@ class DatasetBuilder:
         # denominator = 7 => nb of weeks, denominator = 1 => nb_of days, denominator = 30 => nb of months
         groups = self.data.groupby(['ID'])
         self.data['Timestamp'] = groups.transform('min').loc[:, 'Date':'Date']
-        self.data['Timestamp'] = (self.data['Date'] - self.data['Timestamp']).dt.days/30
+        self.data['Timestamp'] = (self.data['Date'] - self.data['Timestamp']).dt.days / 30
         self.data['Timestamp'] = self.data['Timestamp'].values.astype(np.float)
         self.data['VA'] = self.data['VA'].values.astype(np.float)
 
-        self.data['ID'] = self.data.index
-        self.data.index = [self.data['ID'], self.data['Date']]
+        if len(self.data.columns) == 4:
+            self.data['ID'] = self.data.index
+            self.data.index = [self.data['ID'], self.data['Date']]
+            del self.data['ID']
         del self.data['Date']
-        del self.data['ID']
 
     def resample_time_series(self):
-        # mean_len = 0
-        # nb_series = len(self.data.groupby('ID'))
-        # for entrynb, entry in self.data.groupby('ID'):
-        #     mean_len += entry.index.size
-        # mean_len = round(float(mean_len)/nb_series)
         self.data = self.data.reset_index(level='ID')
         self.data = self.data.groupby('ID').resample('M').mean()
         self.data['Treatment'] = self.data['Treatment'].fillna(0)
         self.data = self.data.interpolate()
         del self.data['Timestamp']
+
+    def find_mean_sequence_len(self):
+        mean_len = 0
+        nb_series = len(self.data.groupby('ID'))
+        for entrynb, entry in self.data.groupby('ID'):
+            mean_len += entry.index.size
+        mean_len = round(float(mean_len) / nb_series)
+        return mean_len
+
+    def describe_dataset(self):
+        summary = self.data.describe()
+
+        fig, ax = plt.subplots()
+        # hide axes
+        fig.patch.set_visible(False)
+        ax.axis('off')
+        ax.axis('tight')
+
+        # Specify values of cells in the table
+        ax.table(cellText=summary.values,
+                  # Specify width of the table
+                  colWidths=[0.3] * len(self.data.columns),
+                  # Specify row labels
+                  rowLabels=summary.index,
+                  # Specify column labels
+                  colLabels=summary.columns)
+
+        fig.tight_layout()
+        plt.show()
+
+    def join_OCT_features(self, df):
+        self.data = self.data.merge(df, how='left', on=['ID', 'Date'])
+        self.data = self.data.sort_values(['ID', 'Date'], ascending=[True, True])
+        self.data.index = [self.data['ID'], self.data['Date']]
+        #del self.data['Date']
+        del self.data['ID']
+
+    def interpolate_OCT_features(self):
+        for feature_name in self.retina_features:
+            def function(group):
+                first = group[feature_name].first_valid_index()
+                last = group[feature_name].last_valid_index()
+                sliced = group.loc[first:last, :]
+                initial_index = sliced.index
+                sliced.index = sliced.index.get_level_values(1)
+                sliced = sliced.interpolate(method='time')
+                sliced.index = initial_index
+                return sliced
+
+            self.data = self.data.groupby('ID').apply(function).reset_index(level=0, drop=True)
+            # remove groups with 1 visit
+            self.data = self.data.groupby('ID').filter(lambda x: 1 < len(x) != x[feature_name].isnull().sum())
+
+    def add_retina_features(self):
+        oct_feature_extractor = OCTFeatureExtractor()
+        df = oct_feature_extractor.get_feature_sequences(OCTFeatureExtractor.VOLUME_FEATURE, 0)
+        feature_name = OCTFeatureExtractor.VOLUME_FEATURE + str(0)
+        self.retina_features.append(feature_name)
+        self.join_OCT_features(df)
+        del self.data['Date']
+
+        df = oct_feature_extractor.get_feature_sequences(OCTFeatureExtractor.VOLUME_FEATURE, 1)
+        feature_name = OCTFeatureExtractor.VOLUME_FEATURE + str(1)
+        self.retina_features.append(feature_name)
+        self.join_OCT_features(df)

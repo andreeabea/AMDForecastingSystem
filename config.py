@@ -1,8 +1,9 @@
 import os
 # initialize the path to the *original* input directory of images
 ORIG_INPUT_DATASET = "D:\\Licenta\\licenta\\data"
+VISUAL_ACUITY_DATA_PATH = "./data_layer/DMLVAVcuID.xls"
 
-# TODO: save splitted data into folders?
+# TODO: save splitted data into folders or create a database?
 # initialize the base path to the *new* directory that will contain
 # the images after computing the training and testing split
 BASE_PATH = "data_new"

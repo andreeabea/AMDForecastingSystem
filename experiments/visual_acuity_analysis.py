@@ -9,8 +9,8 @@ from experiments.image_analysis import ImageAnalysis
 
 class VisualAcuityAnalysis:
 
-    def __init__(self):
-        self.img_analysis = ImageAnalysis()
+    #def __init__(self):
+        #self.img_analysis = ImageAnalysis()
 
     # read chunks of size 3 from .csv
     def flow_from_df(self, dataframe: pd.DataFrame, chunk_size: int = 3):
@@ -35,7 +35,7 @@ class VisualAcuityAnalysis:
         return visualAcuity
 
     def get_visual_acuity_data(self):
-        inputData = pd.read_csv("/data_layer/DMLVAVcuID.csv", nrows=282, header=None)
+        inputData = pd.read_csv("../data_layer/DMLVAVcuID.csv", nrows=282, header=None)
 
         get_chunk = self.flow_from_df(inputData)
         chunk = next(get_chunk)
