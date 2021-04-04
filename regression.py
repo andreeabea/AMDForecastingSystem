@@ -62,7 +62,7 @@ def svr_regression(data):
     plot_feature_importances(gbr.fit(X, Y), X.shape[1])
 
 
-def generate_timeseries(data, include_timestamp=False, size=2):
+def generate_timeseries(data, include_timestamp=False, size=4):
     X = []
     Y = []
 
@@ -157,7 +157,9 @@ if __name__ == '__main__':
 
     data_builder.interpolate_OCT_features()
     data_builder.resample_time_series()
-    print(data_builder.data)
-    print(data_builder.data.shape)
 
-    gradient_boosted_regression(data_builder.data, True)
+    #data_builder.data.to_csv("all_data.csv")
+
+    #data = pd.read_csv("all_data.csv")
+
+    gradient_boosted_regression(data_builder.data)

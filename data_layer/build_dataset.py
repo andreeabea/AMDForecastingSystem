@@ -172,48 +172,82 @@ class DatasetBuilder:
 
         # Specify values of cells in the table
         ax.table(cellText=summary.values,
-                  # Specify width of the table
-                  colWidths=[0.3] * len(self.data.columns),
-                  # Specify row labels
-                  rowLabels=summary.index,
-                  # Specify column labels
-                  colLabels=summary.columns)
+                 # Specify width of the table
+                 colWidths=[0.3] * len(self.data.columns),
+                 # Specify row labels
+                 rowLabels=summary.index,
+                 # Specify column labels
+                 colLabels=summary.columns)
 
         fig.tight_layout()
         plt.show()
 
     def join_OCT_features(self, df):
-        self.data = self.data.merge(df, how='left', on=['ID', 'Date'])
+        try:
+            self.data = self.data.merge(df, how='left', on=['ID', 'Date'])
+        except KeyError:
+            self.data = df.copy()
         self.data = self.data.sort_values(['ID', 'Date'], ascending=[True, True])
         self.data.index = [self.data['ID'], self.data['Date']]
-        #del self.data['Date']
+        # del self.data['Date']
         del self.data['ID']
 
     def interpolate_OCT_features(self):
-        for feature_name in self.retina_features:
-            def function(group):
-                first = group[feature_name].first_valid_index()
-                last = group[feature_name].last_valid_index()
-                sliced = group.loc[first:last, :]
+        def function(group):
+            first = 0
+            last = len(group.index)
+            first_index = None
+            last_index = None
+            for feature_name in self.retina_features:
+                first_valid = group[feature_name].first_valid_index()
+                last_valid = group[feature_name].last_valid_index()
+                if first_valid is None or last_valid is None:
+                    continue
+                if group.index.get_loc(first_valid) > first:
+                    first = group.index.get_loc(first_valid)
+                    first_index = first_valid
+                if group.index.get_loc(last_valid) < last:
+                    last = group.index.get_loc(last_valid)
+                    last_index = last_valid
+            if first_index is not None and last_index is not None:
+                sliced = group.loc[first_index:last_index, :]
                 initial_index = sliced.index
                 sliced.index = sliced.index.get_level_values(1)
                 sliced = sliced.interpolate(method='time')
                 sliced.index = initial_index
-                return sliced
+            else:
+                sliced = group
+            return sliced
 
-            self.data = self.data.groupby('ID').apply(function).reset_index(level=0, drop=True)
+        self.data = self.data.groupby('ID').apply(function).reset_index(level=0, drop=True)
+        # if self.data.index.nlevels == 3:
+        #     self.data = self.data.reset_index(level=0, drop=True)
+        for feature_name in self.retina_features:
             # remove groups with 1 visit
             self.data = self.data.groupby('ID').filter(lambda x: 1 < len(x) != x[feature_name].isnull().sum())
 
     def add_retina_features(self):
         oct_feature_extractor = OCTFeatureExtractor()
-        df = oct_feature_extractor.get_feature_sequences(OCTFeatureExtractor.VOLUME_FEATURE, 0)
-        feature_name = OCTFeatureExtractor.VOLUME_FEATURE + str(0)
-        self.retina_features.append(feature_name)
-        self.join_OCT_features(df)
-        del self.data['Date']
 
-        df = oct_feature_extractor.get_feature_sequences(OCTFeatureExtractor.VOLUME_FEATURE, 1)
-        feature_name = OCTFeatureExtractor.VOLUME_FEATURE + str(1)
-        self.retina_features.append(feature_name)
+        # feature_names = [OCTFeatureExtractor.THICKNESS_FEATURE,
+        #                  OCTFeatureExtractor.VOLUME_FEATURE,
+        #                  OCTFeatureExtractor.CENTRAL_AVG_THICKNESS_FEATURE,
+        #                  OCTFeatureExtractor.MIN_CENTRAL_THICKNESS_FEATURE,
+        #                  OCTFeatureExtractor.MAX_CENTRAL_THICKNESS_FEATURE,
+        #                  OCTFeatureExtractor.TOTAL_VOLUME_FEATURE]
+        #
+        # for i in range(len(feature_names)):
+        #     if i <= 1:
+        #         nb_zones = 9
+        #     else:
+        #         nb_zones = 1
+        #     for j in range(nb_zones):
+        #         df = oct_feature_extractor.get_feature_df(feature_names[i], j)
+        #         feature_name = feature_names[i] + str(j)
+        #         self.retina_features.append(feature_name)
+        #         self.join_OCT_features(df)
+        #         if feature_names[i] != OCTFeatureExtractor.TOTAL_VOLUME_FEATURE:
+        #             del self.data['Date']
+
+        df, self.retina_features = oct_feature_extractor.get_all_features()
         self.join_OCT_features(df)
