@@ -7,6 +7,7 @@ from xlutils.copy import copy
 from xlwt import Style
 import matplotlib.pyplot as plt
 
+import config
 from oct_feature_extraction import OCTFeatureExtractor
 
 
@@ -251,3 +252,19 @@ class DatasetBuilder:
 
         df, self.retina_features = oct_feature_extractor.get_all_features()
         self.join_OCT_features(df)
+
+    def build_all_data(self):
+        self.build_visual_acuity_df()
+        self.add_retina_features()
+        self.format_timestamps()
+
+        self.interpolate_OCT_features()
+        self.resample_time_series()
+
+
+    @staticmethod
+    def write_all_data_to_csv(path):
+        data_builder = DatasetBuilder(config.VISUAL_ACUITY_DATA_PATH)
+        data_builder.build_all_data()
+
+        data_builder.data.to_csv(path)

@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn import linear_model, metrics
 from sklearn.ensemble import GradientBoostingRegressor, VotingRegressor, AdaBoostRegressor, ExtraTreesRegressor
 from sklearn.model_selection import KFold, cross_val_score
+from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 
@@ -62,7 +63,7 @@ def svr_regression(data):
     plot_feature_importances(gbr.fit(X, Y), X.shape[1])
 
 
-def generate_timeseries(data, include_timestamp=False, size=4):
+def generate_timeseries(data, include_timestamp=False, size=1):
     X = []
     Y = []
 
@@ -81,6 +82,8 @@ def generate_timeseries(data, include_timestamp=False, size=4):
     if include_timestamp:
         future_timestamp_array = Y[:, Y.shape[1] - 1:]
     Y = Y[:, :1]
+    # select most important features: 45% acc?
+    X = X[:, :, [22, 23, 17, 21, 11, 12, 7, 20, 16]]
     X = X.reshape(-1, X.shape[1] * X.shape[2])
     if include_timestamp and future_timestamp_array.shape[1] != 0:
         X = np.hstack((X, future_timestamp_array))
@@ -102,7 +105,7 @@ def train_test_split(X, Y):
 def gradient_boosted_regression(data, include_timestamp=False):
     X, Y = generate_timeseries(data, include_timestamp)
 
-    gbr = GradientBoostingRegressor()
+    gbr = MLPRegressor()
     cv = KFold(n_splits=10)
     n_scores = cross_val_score(gbr, X, Y, cv=cv, n_jobs=-1)
     print('Accuracy: ' + str(np.mean(n_scores)))
@@ -150,16 +153,8 @@ def lstm_ensemble_regression():
 
 
 if __name__ == '__main__':
-    data_builder = DatasetBuilder(config.VISUAL_ACUITY_DATA_PATH)
-    data_builder.build_visual_acuity_df()
-    data_builder.add_retina_features()
-    data_builder.format_timestamps()
+    #data_builder = DatasetBuilder(config.VISUAL_ACUITY_DATA_PATH)
+    #data_builder.build_all_data()
+    data = pd.read_csv("all_data.csv", index_col=['ID', 'Date'], parse_dates=True)
 
-    data_builder.interpolate_OCT_features()
-    data_builder.resample_time_series()
-
-    #data_builder.data.to_csv("all_data.csv")
-
-    #data = pd.read_csv("all_data.csv")
-
-    gradient_boosted_regression(data_builder.data)
+    gradient_boosted_regression(data)
