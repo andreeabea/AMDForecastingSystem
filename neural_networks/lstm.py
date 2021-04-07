@@ -5,51 +5,37 @@ from tensorflow.keras.layers import LSTM, Dense
 from tensorflow.keras import backend as K
 
 import matplotlib.pyplot as plt
-
-from data_layer.build_dataset_v1 import split_data_lstm
 import numpy as np
-
-from experiments.visual_acuity_analysis import VisualAcuityAnalysis
 
 
 class Lstm:
 
-    def __init__(self, nb_features=257, nb_sequences=1, dataX=None, dataY=None):
-        self.nb_features = nb_features
-        self.nb_sequences = nb_sequences
+    def __init__(self, trainX, trainY, validX, validY, testX, testY, timesteps=1, nb_features=23):
+        self.nb_sequences = 1
+        self.timesteps = timesteps
+        if trainX is not None and trainY is not None and validX is not None \
+                and validY is not None and testX is not None and testY is not None:
+            self.trainX = trainX
+            self.trainY = trainY
+            self.validX = validX
+            self.validY = validY
+            self.testX = testX
+            self.testY = testY
+            self.nb_features = trainX.shape[1]
 
-        #self.scaler = Normalizer()
-
-        self.scaler = None
-
-        if dataX is not None and dataY is not None:
-            self.trainX, self.trainY, self.validX, self.validY, self.testX, self.testY = split_data_lstm(self.scaler, None, dataX, dataY)
+            self.trainX = self.trainX.reshape(-1, timesteps, self.nb_features)
+            self.validX = self.validX.reshape(-1, timesteps, self.nb_features)
+            self.testX = self.testX.reshape(-1, timesteps, self.nb_features)
         else:
-            va_analysis = VisualAcuityAnalysis()
-            eyeData = va_analysis.get_va_df()
-
-            self.trainX, self.trainY, self.validX, self.validY, self.testX, self.testY = split_data_lstm(None, eyeData, dataX, dataY)
-
-        self.trainX = np.array(self.trainX)
-        self.trainX = self.trainX.reshape(-1, len(self.trainX), self.nb_features)
-        self.trainY = np.array(self.trainY)
-        self.trainY = self.trainY.reshape(-1, len(self.trainY), self.nb_features)
-        self.validX = np.array(self.validX)
-        self.validX = self.validX.reshape(-1, len(self.validX), self.nb_features)
-        self.validY = np.array(self.validY)
-        self.validY = self.validY.reshape(-1, len(self.validY), self.nb_features)
-        self.testX = np.array(self.testX)
-        self.testX = self.testX.reshape(-1, len(self.testX), self.nb_features)
-        self.testY = np.array(self.testY)
-        self.testY = self.testY.reshape(-1, len(self.testY), self.nb_features)
+            self.nb_features = nb_features
 
         self.model = self.build_lstm()
 
     def build_lstm(self):
         #create and fit the multivariate LSTM network
         model = Sequential()
-        model.add(LSTM(128, input_shape=(self.nb_sequences, self.nb_features)))
-        model.add(Dense(self.nb_features, activation="sigmoid"))
+        model.add(LSTM(128, input_shape=(self.timesteps, self.nb_features)))
+        model.add(Dense(1, activation="sigmoid"))
 
         return model
 
@@ -80,32 +66,13 @@ class Lstm:
 
     def evaluate_model(self):
         # evaluate model
-        if len(self.testX) > 0:
-            print("Evaluate on test data")
-            results = self.model.evaluate(self.testX, self.testY)
-            print("test loss:", results)
+        print("Evaluate on test data")
+        results = self.model.evaluate(self.testX, self.testY)
+        print("test loss:", results)
 
-            print("Predict ...")
-            test_predict = self.model.predict(self.testX, batch_size=1)
+        print("Predict ...")
+        prediction = self.model.predict(np.array([self.testX[0]]), batch_size=1)
 
-            if self.scaler is not None:
-                prediction = self.scaler.inverse_transform(test_predict)
-            else:
-                prediction = test_predict
-
-            print("predicted value: ", prediction)
-            print("testX : ", self.testX)
-            print("testY: ", self.testY)
-
-            return results[0], prediction
-        else:
-            return 1000, None
-
-
-if __name__ == '__main__':
-
-    lstm = Lstm()
-    lstm.train()
-
-    #lstm.model = tf.keras.models.load_model('D:\\Licenta\\licenta\\models\\lstm-va.h5')
-    loss, prediction = lstm.evaluate_model()
+        print("predicted value: ", prediction)
+        print("testX : ", [self.testX[0]])
+        print("testY: ", self.testY[0])

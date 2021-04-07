@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
+import tensorflow as tf
 from sklearn import linear_model, metrics
 from sklearn.ensemble import GradientBoostingRegressor, VotingRegressor, AdaBoostRegressor, ExtraTreesRegressor
 from sklearn.model_selection import KFold, cross_val_score
 from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 
@@ -14,6 +16,12 @@ import config
 from data_layer.build_dataset import DatasetBuilder
 from keras.preprocessing.sequence import TimeseriesGenerator
 import matplotlib.pyplot as plt
+
+from neural_networks.lstm import Lstm
+
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.options.display.float_format = '{:,.2f}'.format
 
 
 def split_data(data):
@@ -48,17 +56,6 @@ def split_data(data):
     testY = np.array(testY)
 
     return trainX, trainY, testX, testY
-
-
-def train_test_split(X, Y):
-    mask = np.random.rand(len(X)) < 0.8
-    trainX = X[mask]
-    testX = X[~mask]
-    trainY = Y[mask]
-    testY = Y[~mask]
-
-    return trainX.reshape(-1, trainX.shape[1]*trainX.shape[2]), trainY.reshape(-1), \
-           testX.reshape(-1, testX.shape[1]*testX.shape[2]), testY.reshape(-1)
 
 
 def svr_regression_tslearn(data):
@@ -96,13 +93,35 @@ def generate_timeseries(data, include_timestamp=False, size=1, features='all'):
         # append the timestamp to the feature list
         feature_list.append(24)
     Y = Y[:, :1]
-    if features is not 'all':
-        X = X[:, :, feature_list]
+    if features == 'exclude VA':
+        X = X[:, :, 1:]
+    else:
+        if features != 'all':
+            X = X[:, :, feature_list]
     X = X.reshape(-1, X.shape[1] * X.shape[2])
     if include_timestamp and future_timestamp_array.shape[1] != 0:
         X = np.hstack((X, future_timestamp_array))
 
     return X, Y.reshape(-1)
+
+
+def train_test_val_split(dataX, dataY):
+    # compute the training split
+    i = int(len(dataX) * config.TRAIN_SPLIT)
+    trainX = dataX[:i]
+    trainY = dataY[:i]
+
+    # obtain the validation and testing splits
+    valid = int(len(dataX) * config.VAL_SPLIT)
+    validX = dataX[i:i + valid]
+    validY = dataY[i:i + valid]
+
+    testX = dataX[i + valid:]
+    testY = dataY[i + valid:]
+
+    # return trainX.reshape(-1, trainX.shape[1]*trainX.shape[2]), trainY.reshape(-1), \
+    #        testX.reshape(-1, testX.shape[1]*testX.shape[2]), testY.reshape(-1)
+    return trainX, trainY, validX, validY, testX, testY
 
 
 def svr_regression(data):
@@ -161,15 +180,46 @@ def plot_feature_importances(regressor, nb_features):
     plt.show()
 
 
-def lstm_ensemble_regression():
-    return None
+def lstm_regression(data, include_timestamp=False, previous_visits=1, features='exclude VA'):
+    X, Y = generate_timeseries(data, include_timestamp, previous_visits, features)
+    trainX, trainY, validX, validY, testX, testY = train_test_val_split(X, Y)
+    lstm = Lstm(trainX, trainY, validX, validY, testX, testY)
+    lstm.train()
+
+    lstm.evaluate_model()
+
+
+def lstm_ensemble_regression(data, include_timestamp=False, previous_visits=1, features='exclude VA'):
+    X, Y = generate_timeseries(data, include_timestamp, previous_visits, features)
+    X = X.reshape(-1, previous_visits, X.shape[1])
+
+    def build_lstm():
+        lstm = Lstm(None, None, None, None, None, None, timesteps=previous_visits, nb_features=X.shape[2])
+        lstm.model.compile(loss='mean_absolute_error', optimizer='adam', metrics=['mean_absolute_error'])
+        return lstm.model
+
+
+    keras_lstm = tf.keras.wrappers.scikit_learn.KerasRegressor(build_lstm, epochs=50, verbose=False)
+    keras_lstm._estimator_type = 'regressor'
+
+    lstm_ensemble = AdaBoostRegressor(base_estimator=keras_lstm)
+    #print(lstm_ensemble.fit(trainX, trainY).score(testX, testY))
+    cv = KFold(n_splits=10)
+    n_scores = cross_val_score(lstm_ensemble, X, Y, cv=cv, n_jobs=-1, scoring='neg_mean_absolute_error')
+    print('Accuracy: ' + str(np.mean(n_scores)))
+    # plot_feature_importances(lstm_ensemble.fit(X, Y), X.shape[1])
 
 
 if __name__ == '__main__':
     #DatasetBuilder.write_all_data_to_csv("all_data.csv", include_timestamps=True)
-    include_timestamps = True
+    include_timestamps = False
     if include_timestamps:
+        last_column = 'Timestamp'
         data = pd.read_csv("all_data.csv", index_col=['ID', 'Date'], parse_dates=True)
     else:
+        last_column = 'TotalVolume0'
         data = pd.read_csv("all_data_resampled.csv", index_col=['ID', 'Date'], parse_dates=True)
-    gradient_boosted_regression(data, include_timestamps, 1, 'not all')
+
+    data[data.columns] = MinMaxScaler().fit_transform(data)
+    #gradient_boosted_regression(data, include_timestamps, 1)
+    lstm_ensemble_regression(data, include_timestamps, 1)
