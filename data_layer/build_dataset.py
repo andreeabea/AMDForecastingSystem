@@ -130,13 +130,14 @@ class DatasetBuilder:
         data = data.set_index('ID')
         data = data.sort_values(['ID', 'Date'], ascending=[True, True])
         self.data = data
+        self.retina_features.append('VA')
 
     def format_timestamps(self):
         # the time intervals can be represented in number of days/weeks/months
         # best choice would be months according to ophthalmologists
-        # denominator = 7 => nb of weeks, denominator = 1 => nb_of days, denominator = 30 => nb of months
         groups = self.data.groupby(['ID'])
         self.data['Timestamp'] = groups.transform('min').loc[:, 'Date':'Date']
+        # denominator = 7 => nb of weeks, denominator = 1 => nb_of days, denominator = 30 => nb of months
         self.data['Timestamp'] = (self.data['Date'] - self.data['Timestamp']).dt.days / 30
         self.data['Timestamp'] = self.data['Timestamp'].values.astype(np.float)
         self.data['VA'] = self.data['VA'].values.astype(np.float)
@@ -212,59 +213,36 @@ class DatasetBuilder:
                     last_index = last_valid
             if first_index is not None and last_index is not None:
                 sliced = group.loc[first_index:last_index, :]
-                initial_index = sliced.index
-                sliced.index = sliced.index.get_level_values(1)
-                sliced = sliced.interpolate(method='time')
-                sliced.index = initial_index
             else:
                 sliced = group
+            initial_index = sliced.index
+            sliced.index = sliced.index.get_level_values(1)
+            sliced = sliced.interpolate(method='time')
+            sliced.index = initial_index
+            sliced = sliced.dropna()
             return sliced
 
         self.data = self.data.groupby('ID').apply(function).reset_index(level=0, drop=True)
-        # if self.data.index.nlevels == 3:
-        #     self.data = self.data.reset_index(level=0, drop=True)
         for feature_name in self.retina_features:
             # remove groups with 1 visit
             self.data = self.data.groupby('ID').filter(lambda x: 1 < len(x) != x[feature_name].isnull().sum())
 
     def add_retina_features(self):
         oct_feature_extractor = OCTFeatureExtractor()
-
-        # feature_names = [OCTFeatureExtractor.THICKNESS_FEATURE,
-        #                  OCTFeatureExtractor.VOLUME_FEATURE,
-        #                  OCTFeatureExtractor.CENTRAL_AVG_THICKNESS_FEATURE,
-        #                  OCTFeatureExtractor.MIN_CENTRAL_THICKNESS_FEATURE,
-        #                  OCTFeatureExtractor.MAX_CENTRAL_THICKNESS_FEATURE,
-        #                  OCTFeatureExtractor.TOTAL_VOLUME_FEATURE]
-        #
-        # for i in range(len(feature_names)):
-        #     if i <= 1:
-        #         nb_zones = 9
-        #     else:
-        #         nb_zones = 1
-        #     for j in range(nb_zones):
-        #         df = oct_feature_extractor.get_feature_df(feature_names[i], j)
-        #         feature_name = feature_names[i] + str(j)
-        #         self.retina_features.append(feature_name)
-        #         self.join_OCT_features(df)
-        #         if feature_names[i] != OCTFeatureExtractor.TOTAL_VOLUME_FEATURE:
-        #             del self.data['Date']
-
         df, self.retina_features = oct_feature_extractor.get_all_features()
         self.join_OCT_features(df)
 
-    def build_all_data(self):
+    def build_all_data(self, include_timestamps=False):
         self.build_visual_acuity_df()
         self.add_retina_features()
-        self.format_timestamps()
 
         self.interpolate_OCT_features()
-        self.resample_time_series()
-
+        self.format_timestamps()
+        if not include_timestamps:
+            self.resample_time_series()
 
     @staticmethod
-    def write_all_data_to_csv(path):
+    def write_all_data_to_csv(path, include_timestamps=False):
         data_builder = DatasetBuilder(config.VISUAL_ACUITY_DATA_PATH)
-        data_builder.build_all_data()
-
+        data_builder.build_all_data(include_timestamps=include_timestamps)
         data_builder.data.to_csv(path)
