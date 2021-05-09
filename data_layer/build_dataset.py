@@ -3,9 +3,11 @@ import re
 import pandas as pd
 import numpy as np
 import xlrd
+from dtaidistance import dtw
 from xlutils.copy import copy
 from xlwt import Style
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import config
 from oct_feature_extraction import OCTFeatureExtractor
@@ -227,14 +229,17 @@ class DatasetBuilder:
             # remove groups with 1 visit
             self.data = self.data.groupby('ID').filter(lambda x: 1 < len(x) != x[feature_name].isnull().sum())
 
-    def add_retina_features(self):
+    def add_retina_features(self, datatype):
         oct_feature_extractor = OCTFeatureExtractor()
-        df, self.retina_features = oct_feature_extractor.get_all_features()
+        if datatype == 'numerical':
+            df, self.retina_features = oct_feature_extractor.get_all_features()
+        else:
+            df = oct_feature_extractor.get_images_df()
         self.join_OCT_features(df)
 
-    def build_all_data(self, include_timestamps=False):
+    def build_all_data(self, datatype='numerical', include_timestamps=False):
         self.build_visual_acuity_df()
-        self.add_retina_features()
+        self.add_retina_features(datatype)
 
         self.interpolate_OCT_features()
         self.format_timestamps()
@@ -242,7 +247,18 @@ class DatasetBuilder:
             self.resample_time_series()
 
     @staticmethod
-    def write_all_data_to_csv(path, include_timestamps=False):
+    def write_all_data_to_csv(path, datatype='numerical', include_timestamps=False):
         data_builder = DatasetBuilder(config.VISUAL_ACUITY_DATA_PATH)
-        data_builder.build_all_data(include_timestamps=include_timestamps)
+        data_builder.build_all_data(datatype=datatype, include_timestamps=include_timestamps)
         data_builder.data.to_csv(path)
+
+    def dtw_corr(self):
+        correlation_matrix = pd.DataFrame(0, index=list(self.data.columns.values), columns=list(self.data.columns.values))
+        nb_timeseries = 0
+        for nb, entry in self.data.groupby('ID'):
+            matrix = entry.corr(method=dtw.distance)
+            correlation_matrix = correlation_matrix.add(matrix, fill_value=0)
+            nb_timeseries += 1
+        correlation_matrix = correlation_matrix.div(nb_timeseries)
+        sns.heatmap(correlation_matrix)
+        plt.show()

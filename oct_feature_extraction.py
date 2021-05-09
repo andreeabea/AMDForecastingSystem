@@ -2,8 +2,13 @@ import os
 from datetime import datetime
 from xml.dom import minidom
 
+from PIL import Image
+
 import config
 import pandas as pd
+import numpy as np
+
+from experiments.code_handler import CodeHandler
 
 
 class OCTFeatureExtractor:
@@ -72,3 +77,58 @@ class OCTFeatureExtractor:
                 result_df = result_df.sort_values(['ID', 'Date'], ascending=[True, True])
 
         return result_df, df_features
+
+    def get_images_df(self):
+        df = pd.DataFrame()
+
+        code_handler = CodeHandler()
+
+        for patient in os.scandir(config.ORIG_INPUT_DATASET):
+            visits = len(list(os.scandir(patient)))
+
+            if (visits <= 1):
+                continue
+
+            for visit in os.scandir(patient):
+                for eye in os.scandir(visit):
+                    date = datetime.strptime(visit.name.split("- ")[1], '%d.%m.%Y')
+                    for file in os.scandir(eye):
+                        if file.path.endswith(".xml"):
+                            xmlfile = minidom.parse(file.path)
+                            fundusImgPath = ""
+                            for file in os.scandir(eye):
+                                if file.path.endswith(".xml"):
+                                    xmlfile = minidom.parse(file.path)
+                                    fundusImgPath = \
+                                    xmlfile.getElementsByTagName('ExamURL')[0].firstChild.nodeValue.rsplit("\\", 1)[1]
+                    for imageFile in os.scandir(eye):
+                        if imageFile.path.endswith(".tif") and fundusImgPath is not None and fundusImgPath in imageFile.name:
+                            image = Image.open(imageFile.path).convert("L")
+                            # resize img
+                            image = np.array(image.resize((256, 256), Image.ANTIALIAS))
+                            patientID = xmlfile.getElementsByTagName('ID')[0].firstChild.nodeValue
+                            image = self.reshape_image(np.array(image), 256, 256)
+                            image = image / 255
+                            latent_code = code_handler.get_latent_codes(image)
+                            codes_dict = {}
+                            for i in range(len(latent_code[0])):
+                                codes_dict[str(i)] = latent_code[0][i]
+
+                            if "OS" in eye.name:
+                                newEntryL = pd.DataFrame({**dict({'ID': [str(patientID) + 'OS'], 'Date': [date]}), **codes_dict})
+                                df = df.append(newEntryL)
+                            else:
+                                newEntryR = pd.DataFrame({**dict({'ID': [str(patientID) + 'OD'], 'Date': [date]}), **codes_dict})
+                                df = df.append(newEntryR)
+
+        return df
+
+    def reshape_image(self, images, x, y):
+        images = np.vstack(images)
+        images = images.reshape(-1, x, y, 1)
+        return images
+
+
+if __name__ == '__main__':
+    feature_extractor = OCTFeatureExtractor()
+    print(feature_extractor.get_images_df())

@@ -1,11 +1,13 @@
 import tensorflow as tf
+import tensorflow_addons as tfa
+from sklearn.metrics import r2_score
 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM, Dense, ReLU, Dropout, Attention, Activation, Input
 from tensorflow.keras import backend as K
+from tensorflow.keras.models import Model
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 class Lstm:
@@ -32,6 +34,24 @@ class Lstm:
         self.model = self.build_lstm()
 
     def build_lstm(self):
+        model = Sequential()
+        model.add(LSTM(128, input_shape=(self.timesteps, self.nb_features)))
+        model.add(ReLU())
+        model.add(Dropout(0.1))
+        model.add(Dense(1, activation="sigmoid"))
+        return model
+
+    def build_attention_lstm(self):
+        input_layer = Input((self.timesteps, self.nb_features))
+        lstm = LSTM(128, input_shape=(self.timesteps, self.nb_features))(input_layer)
+        relu = Activation('relu')(lstm)
+        dropout = Dropout(0.1)(relu)
+        attention = Attention()([lstm, dropout])
+        output_layer = Dense(1, activation="sigmoid")(attention)
+        model = Model(input_layer, output_layer)
+        return model
+
+    def build_lstm1(self):
         #create and fit the multivariate LSTM network
         model = Sequential()
         model.add(LSTM(128, input_shape=(self.timesteps, self.nb_features)))
@@ -46,11 +66,12 @@ class Lstm:
 
     def train(self):
         # MAE performed better than MSE or others
-        self.model.compile(loss='mean_absolute_error', optimizer='adam', metrics=['mean_absolute_error'])
+        self.model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
+                                                                                  'mean_squared_error'])
 
         my_callbacks = [
             tf.keras.callbacks.ModelCheckpoint(filepath='../models/lstm-va.h5'),
-            tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3)
+            tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
         ]
 
         self.model.fit(self.trainX, self.trainY, epochs=500, batch_size=8, verbose=2,
@@ -71,8 +92,17 @@ class Lstm:
         print("test loss:", results)
 
         print("Predict ...")
-        prediction = self.model.predict(np.array([self.testX[0]]), batch_size=1)
+        prediction = self.model.predict(self.testX, batch_size=1)
 
         print("predicted value: ", prediction)
-        print("testX : ", [self.testX[0]])
-        print("testY: ", self.testY[0])
+        print("testX : ", self.testX)
+        print("testY: ", self.testY)
+        self.testY = self.testY.reshape(self.testY.shape[0],1)
+        print(self.testY.shape)
+        print(prediction.shape)
+        print("RMSPE: ")
+        result = self.rmspe(self.testY, prediction)
+        print(result)
+        print("Compute R^2 ...")
+        result = r2_score(self.testY, prediction)
+        print(result)
