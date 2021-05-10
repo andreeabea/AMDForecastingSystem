@@ -163,8 +163,10 @@ def feature_selector(data, include_timestamp=False, previous_visits=1, features=
     X, Y = generate_timeseries(data, include_timestamp, previous_visits, features)
     print(mutual_info_regression(X, Y))
     gbr = GradientBoostingRegressor()
-    # 11 best
-    gbr = RFE(gbr, n_features_to_select=11)
+    # 11 best for numerical
+    # for numerical and image data 28 - 53.21
+    # gru - 53.13
+    gbr = RFE(gbr, n_features_to_select=28)
     cv = KFold(n_splits=10)
     n_scores = cross_val_score(gbr, X, Y, cv=cv, n_jobs=-1)
     print('Accuracy: ' + str(np.mean(n_scores)))
@@ -298,8 +300,8 @@ def lasso_feature_selector(data, include_timestamp=False, features='exclude VA')
 
 
 if __name__ == '__main__':
-    #DatasetBuilder.write_all_data_to_csv("image_data.csv", datatype='images', include_timestamps=True)
-    include_timestamps = True
+    #DatasetBuilder.write_all_data_to_csv("image_data_resampled.csv", datatype='images', include_timestamps=False)
+    include_timestamps = False
     datatype = 'all'
     if include_timestamps:
         last_column = 'Timestamp'
@@ -317,11 +319,21 @@ if __name__ == '__main__':
                 data = num_data.merge(img_data, how='left', on=['ID', 'Date'])
     else:
         last_column = 'TotalVolume0'
-        data = pd.read_csv("all_data_resampled.csv", index_col=['ID', 'Date'], parse_dates=True)
-
+        if datatype == 'numerical':
+            data = pd.read_csv("all_data_resampled.csv", index_col=['ID', 'Date'], parse_dates=True)
+        else:
+            if datatype == 'images':
+                data = pd.read_csv("image_data_resampled.csv", index_col=['ID', 'Date'], parse_dates=True)
+            else:
+                num_data = pd.read_csv("all_data_resampled.csv", index_col=['ID', 'Date'], parse_dates=True)
+                img_data = pd.read_csv("image_data_resampled.csv", index_col=['ID', 'Date'], parse_dates=True)
+                del img_data['VA']
+                del img_data['Treatment']
+                data = num_data.merge(img_data, how='left', on=['ID', 'Date'])
 
     data[data.columns] = MinMaxScaler().fit_transform(data)
+    #data = data.ewm(alpha=0.1).mean()
 
     #voting_regression(data, include_timestamps, 1)
-    #feature_vector = feature_selector(data, include_timestamps, 'exclude VA')
-    gradient_boosted_regression(data, include_timestamps, 1, 'all')
+    feature_vector = feature_selector(data, include_timestamps)
+    lstm_regression(data, include_timestamps, 2, feature_vector)

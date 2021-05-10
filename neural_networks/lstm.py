@@ -3,7 +3,7 @@ import tensorflow_addons as tfa
 from sklearn.metrics import r2_score
 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, ReLU, Dropout, Attention, Activation, Input
+from tensorflow.keras.layers import LSTM, Dense, ReLU, Dropout, Attention, Activation, Input, Bidirectional, GRU
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 
@@ -49,6 +49,35 @@ class Lstm:
         attention = Attention()([lstm, dropout])
         output_layer = Dense(1, activation="sigmoid")(attention)
         model = Model(input_layer, output_layer)
+        return model
+
+    def create_bilstm(self):
+        """
+        adapted from https://towardsdatascience.com/predictive-analytics-time-series-forecasting-with-gru-and-bilstm-in-tensorflow-87588c852915
+        """
+        model = Sequential()
+        # Input layer
+        model.add(Bidirectional(
+            LSTM(units=128, return_sequences=True),
+            input_shape=(self.timesteps, self.nb_features)))
+        # Hidden layer
+        model.add(Bidirectional(LSTM(units=128)))
+        model.add(Dense(1, activation="sigmoid"))
+        return model
+
+    def create_gru(self):
+        """
+        adapted from https://towardsdatascience.com/predictive-analytics-time-series-forecasting-with-gru-and-bilstm-in-tensorflow-87588c852915
+        """
+        model = Sequential()
+        # Input layer
+        model.add(GRU(units=128, return_sequences=True,
+                      input_shape=(self.timesteps, self.nb_features)))
+        model.add(Dropout(0.2))
+        # Hidden layer
+        model.add(GRU(units=128))
+        model.add(Dropout(0.2))
+        model.add(Dense(1, activation='sigmoid'))
         return model
 
     def build_lstm1(self):
