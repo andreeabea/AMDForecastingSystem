@@ -1,0 +1,197 @@
+Epoch 1/500
+18/18 - 2s - loss: 0.1257 - mean_absolute_error: 0.3238 - mean_squared_error: 0.1257 - val_loss: 0.0889 - val_mean_absolute_error: 0.2791 - val_mean_squared_error: 0.0889
+Epoch 2/500
+18/18 - 0s - loss: 0.0922 - mean_absolute_error: 0.2657 - mean_squared_error: 0.0922 - val_loss: 0.0702 - val_mean_absolute_error: 0.2348 - val_mean_squared_error: 0.0702
+Epoch 3/500
+18/18 - 0s - loss: 0.0746 - mean_absolute_error: 0.2287 - mean_squared_error: 0.0746 - val_loss: 0.0643 - val_mean_absolute_error: 0.2183 - val_mean_squared_error: 0.0643
+Epoch 4/500
+18/18 - 0s - loss: 0.0651 - mean_absolute_error: 0.2141 - mean_squared_error: 0.0651 - val_loss: 0.0613 - val_mean_absolute_error: 0.2131 - val_mean_squared_error: 0.0613
+Epoch 5/500
+18/18 - 0s - loss: 0.0545 - mean_absolute_error: 0.1993 - mean_squared_error: 0.0545 - val_loss: 0.0593 - val_mean_absolute_error: 0.2071 - val_mean_squared_error: 0.0593
+Epoch 6/500
+18/18 - 0s - loss: 0.0466 - mean_absolute_error: 0.1785 - mean_squared_error: 0.0466 - val_loss: 0.0568 - val_mean_absolute_error: 0.1965 - val_mean_squared_error: 0.0568
+Epoch 7/500
+18/18 - 0s - loss: 0.0388 - mean_absolute_error: 0.1593 - mean_squared_error: 0.0388 - val_loss: 0.0561 - val_mean_absolute_error: 0.1924 - val_mean_squared_error: 0.0561
+Epoch 8/500
+18/18 - 0s - loss: 0.0360 - mean_absolute_error: 0.1527 - mean_squared_error: 0.0360 - val_loss: 0.0556 - val_mean_absolute_error: 0.1861 - val_mean_squared_error: 0.0556
+Epoch 9/500
+18/18 - 0s - loss: 0.0330 - mean_absolute_error: 0.1402 - mean_squared_error: 0.0330 - val_loss: 0.0553 - val_mean_absolute_error: 0.1841 - val_mean_squared_error: 0.0553
+Epoch 10/500
+18/18 - 0s - loss: 0.0304 - mean_absolute_error: 0.1307 - mean_squared_error: 0.0304 - val_loss: 0.0561 - val_mean_absolute_error: 0.1799 - val_mean_squared_error: 0.0561
+Epoch 11/500
+18/18 - 0s - loss: 0.0304 - mean_absolute_error: 0.1293 - mean_squared_error: 0.0304 - val_loss: 0.0553 - val_mean_absolute_error: 0.1782 - val_mean_squared_error: 0.0553
+Epoch 12/500
+18/18 - 0s - loss: 0.0292 - mean_absolute_error: 0.1270 - mean_squared_error: 0.0292 - val_loss: 0.0550 - val_mean_absolute_error: 0.1783 - val_mean_squared_error: 0.0550
+Epoch 13/500
+18/18 - 0s - loss: 0.0281 - mean_absolute_error: 0.1241 - mean_squared_error: 0.0281 - val_loss: 0.0547 - val_mean_absolute_error: 0.1758 - val_mean_squared_error: 0.0547
+Epoch 14/500
+18/18 - 0s - loss: 0.0264 - mean_absolute_error: 0.1183 - mean_squared_error: 0.0264 - val_loss: 0.0552 - val_mean_absolute_error: 0.1758 - val_mean_squared_error: 0.0552
+Epoch 15/500
+18/18 - 0s - loss: 0.0256 - mean_absolute_error: 0.1172 - mean_squared_error: 0.0256 - val_loss: 0.0555 - val_mean_absolute_error: 0.1766 - val_mean_squared_error: 0.0555
+Epoch 16/500
+18/18 - 0s - loss: 0.0252 - mean_absolute_error: 0.1154 - mean_squared_error: 0.0252 - val_loss: 0.0553 - val_mean_absolute_error: 0.1727 - val_mean_squared_error: 0.0553
+Evaluate on test data
+1/1 [==============================] - 0s 14ms/step - loss: 0.0120 - mean_absolute_error: 0.0763 - mean_squared_error: 0.0120
+test loss: [0.011966017074882984, 0.07633408159017563, 0.011966017074882984]
+Predict ...
+predicted value:  [[0.38283134]
+ [0.56419706]
+ [0.65786505]
+ [0.55455345]
+ [0.15949968]
+ [0.06527108]
+ [0.07907033]
+ [0.10618517]
+ [0.6739465 ]
+ [0.52663094]
+ [0.01544523]
+ [0.01641616]
+ [0.03639928]
+ [0.0580124 ]
+ [0.07615384]
+ [0.11055848]
+ [0.0563336 ]
+ [0.08043638]
+ [0.07321963]
+ [0.0563933 ]
+ [0.04438394]]
+testX :  [[[1.         0.125      0.14824798 ... 0.9426153  0.         0.32041885]]
+
+ [[0.         0.1099537  0.17385445 ... 0.34329645 0.         0.05863874]]
+
+ [[0.         0.11226852 0.17654987 ... 0.63300996 0.         0.32041885]]
+
+ ...
+
+ [[1.         0.14814815 0.15498652 ... 0.         0.24655758 0.2565445 ]]
+
+ [[1.         0.16319444 0.14959569 ... 0.11468002 0.10905874 0.25026178]]
+
+ [[1.         0.38310185 0.30188679 ... 0.05417771 0.10985065 0.05968586]]]
+testY:  [0.5        0.625      0.8        0.31746032 0.05       0.025
+ 0.05       0.05       0.625      0.5        0.01       0.01
+ 0.01       0.01       0.025      0.025      0.2        0.4
+ 0.05       0.05       0.025     ]
+(21, 1)
+(21, 1)
+RMSPE: 
+tf.Tensor(1.6657533353681764, shape=(), dtype=float64)
+Compute R^2 ...
+0.8115257525670191
+
+
+
+[2.19600297e-01 4.83133583e-01 3.50552584e-01 3.51183128e-01
+ 3.66033807e-01 2.99132966e-01 3.79128756e-01 2.43740869e-01
+ 4.25352929e-01 2.57468585e-01 4.91950791e-01 3.41246278e-01
+ 3.59550775e-01 3.62177797e-01 2.80436856e-01 3.86053234e-01
+ 2.45509663e-01 3.98465969e-01 2.62513100e-01 3.34063869e-01
+ 3.95653087e-01 3.82487686e-01 3.24972665e-01 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 1.09364855e-01 5.28585163e-02
+ 1.04538679e-01 0.00000000e+00 0.00000000e+00 2.37229141e-02
+ 1.63655673e-02 1.80828946e-04 0.00000000e+00 5.32193846e-02
+ 5.10822168e-02 7.45272453e-02 4.59366136e-02 0.00000000e+00
+ 1.59722015e-02 3.50787811e-02 6.87392897e-02 0.00000000e+00
+ 0.00000000e+00 5.24341325e-02 2.59264393e-02 1.33893430e-01
+ 1.93968944e-01 0.00000000e+00 8.85988491e-03 4.87150402e-02
+ 4.86805011e-02 9.15909304e-02 0.00000000e+00 1.37491443e-01
+ 8.17644052e-02 0.00000000e+00 9.43038746e-02 3.34918463e-02
+ 1.81387465e-02 0.00000000e+00 0.00000000e+00 9.32098588e-03
+ 5.66806423e-02 0.00000000e+00 9.22483984e-02 7.08854764e-02
+ 1.42140098e-01 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 9.78325420e-02 7.96747745e-02 0.00000000e+00 1.53031951e-01
+ 1.80252619e-02 0.00000000e+00 6.97281933e-02 9.69689530e-02
+ 2.08400152e-02 1.07200889e-01 0.00000000e+00 2.91892578e-02
+ 4.43205382e-02 4.06642834e-02 3.95858089e-02 6.91391016e-02
+ 5.89818561e-03 1.66525197e-03 0.00000000e+00 2.85366280e-02
+ 0.00000000e+00 1.15093924e-01 3.05940094e-02 4.84864727e-03
+ 6.88845412e-03 5.31614792e-02 4.65807859e-02 2.30667314e-02
+ 2.74916699e-02 0.00000000e+00 6.10076561e-02 0.00000000e+00
+ 4.45451011e-02 1.11032155e-01 2.45489758e-02 8.82857056e-02
+ 3.13555728e-02 3.20122559e-02 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 7.44373452e-02 0.00000000e+00 2.17994217e-02
+ 1.51941214e-01 1.83813640e-02 1.77668596e-02 4.19160287e-02
+ 5.53963518e-02 1.16250950e-01 6.96936835e-02 3.06505445e-02
+ 4.13303534e-02 0.00000000e+00 0.00000000e+00 3.73323914e-02
+ 0.00000000e+00 0.00000000e+00 5.68758167e-02 4.47679555e-02
+ 3.93982597e-02 2.94873359e-03 0.00000000e+00 2.67036766e-02
+ 0.00000000e+00 3.24741201e-02 1.27577963e-01 7.95105748e-02
+ 8.03616773e-02 3.34334171e-02 3.90440017e-03 1.16239432e-01
+ 2.20728001e-02 0.00000000e+00 0.00000000e+00 5.20252446e-04
+ 8.36352757e-02 2.31632051e-02 7.76019061e-02 1.02988017e-01
+ 0.00000000e+00 7.58430290e-03 0.00000000e+00 5.39331066e-02
+ 6.17369535e-02 5.31663351e-02 5.01387807e-02 1.44965349e-02
+ 4.70912341e-02 1.59760659e-02 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 4.17061208e-02 8.75183335e-02 1.39953464e-02
+ 1.02507458e-01 6.79259722e-02 4.25094347e-02 0.00000000e+00
+ 3.68513856e-02 8.91539956e-02 1.28389763e-01 5.67926469e-02
+ 1.27560028e-01 4.25731099e-02 6.37955278e-02 0.00000000e+00
+ 0.00000000e+00 8.05558099e-02 0.00000000e+00 0.00000000e+00
+ 5.27835692e-02 2.80266077e-02 0.00000000e+00 2.46775347e-02
+ 1.55507922e-02 2.47195261e-01 0.00000000e+00 9.87429736e-02
+ 1.07772731e-01 0.00000000e+00 0.00000000e+00 2.63481329e-02
+ 6.03595697e-02 2.07470450e-02 1.63756800e-01 4.34992454e-02
+ 0.00000000e+00 2.01542494e-02 6.66038390e-02 4.59609835e-02
+ 9.84709669e-02 9.98351708e-02 3.85146639e-02 8.14389233e-02
+ 0.00000000e+00 0.00000000e+00 3.29298217e-02 8.82499041e-02
+ 3.94501506e-02 3.47177944e-02 2.73849030e-02 9.90356408e-02
+ 3.09786731e-02 5.10529100e-02 2.13863142e-02 0.00000000e+00
+ 0.00000000e+00 4.26413506e-02 8.47362096e-02 8.85534605e-03
+ 0.00000000e+00 0.00000000e+00 3.76322250e-02 5.93846506e-02
+ 6.55669417e-02 8.19045146e-02 4.03300502e-02 8.49086161e-02
+ 0.00000000e+00 4.65651643e-02 1.02834461e-01 0.00000000e+00
+ 3.64971053e-02 0.00000000e+00 0.00000000e+00 1.80379264e-02
+ 1.38312012e-02 0.00000000e+00 1.90632938e-02 9.47987812e-02
+ 1.32580536e-03 9.03383369e-02 0.00000000e+00 4.35964529e-02
+ 1.75087000e-01 4.79438154e-02 8.39930358e-02 5.64688208e-02
+ 2.30395496e-02 3.24431373e-03 5.07063198e-02 6.08965239e-02
+ 8.48385423e-02 2.94780243e-02 8.43589758e-02 2.11464281e-05
+ 1.36015121e-01 1.72000929e-02 2.22077495e-02 0.00000000e+00
+ 2.57935522e-02 6.42993715e-02 3.20084965e-02 8.34014408e-02
+ 0.00000000e+00 4.10239911e-02 1.79641986e-02 9.04468887e-02
+ 9.61175396e-02 0.00000000e+00 1.12427360e-01 8.88333824e-02
+ 6.66516729e-02 4.76276803e-02 2.07287129e-02 2.44434529e-02
+ 0.00000000e+00]
+Accuracy: 0.22540964278950684
+Num Features: 28
+Selected Features: [ True  True False False  True False False False False  True False False
+ False False  True  True False  True False  True False  True  True  True
+ False False False False False False False False False False False False
+ False False False False False False  True False False False  True False
+ False False False False False False False False  True False False False
+ False False False False False False False False False False False False
+ False False False False False False False False False False False False
+ False False False False False False False False False False False False
+ False False  True False  True False False False False False False False
+ False False False False False False False False False False False False
+ False False  True False False False False False False False False False
+ False False False False False False False False False False False False
+ False False False False  True False False False False False False False
+ False False False False False False False False False False False False
+ False False False  True False False False False  True False False False
+ False False False False False False False False False False False False
+ False False False False False False  True False False False False False
+ False False False False False False False False False False False False
+ False False False False False False False False False False  True False
+ False  True False False False  True False False False False False False
+ False False False  True False False False False False False False False
+ False False False False  True False False False False False False False
+ False False False False False False False False False False  True False
+ False False  True False False]
+Feature Ranking: [  1   1 119 121   1  13  86   4 113   1  12 136  65  56   1   1  28   1
+  96   1  73   1   1   1 130 159 108 165   3  71 137  95  97 148  42  38
+ 120 134 122 177 118  14   1  41 178 146   1 124 104 107 197 194 205  50
+  83  60   1  88  66 109 161 140 147 224 151 251  64  19 155 160 229 167
+  53  18 170 173  25 203 233  91  68 188  80  35 198 220  29  48 106  79
+  27  92 208 182 246 244 217  93   1  74   1 234 157 243 248  55 240  89
+ 250 241 253 252 172 110 239  94  49  54  78 238 227  51   1 180   5 196
+ 181  63 154 144 174 183   9 225 189 199  34  31 210 212  90  45  61  39
+  52 222 166 128   1 139 164  32 152 105 153 138 201  84  11 186 162 175
+  43 236   2 150 133  46 125  40   6   1 149  17  58 202   1  81  15  69
+ 176  47 102  76 127 215  72   8 171  75 192 200 204 206 211  26 219 213
+   1 209 249  59  62 232 242 101  85 221 207 168  22  87 131  70 218  24
+ 245 117  44 185 247 190 156 179 100 226   1 214  77   1  82  33 187   1
+ 237 191  67 228 254 235 231 223 230   1 158  21   7 216 142  99 103 195
+  16 184 193 112   1 169 132 163  30 123  98 111 126  23 145  10 141 135
+  20 129  36 115   1 116 114  57   1 143  37]
+[1, 2, 5, 10, 15, 16, 18, 20, 22, 23, 24, 43, 47, 57, 99, 101, 123, 149, 172, 177, 199, 227, 230, 234, 244, 257, 275, 279]
