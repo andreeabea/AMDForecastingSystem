@@ -17,7 +17,7 @@ class CodeHandler:
         self.image_width = 256
         self.image_height = 256
 
-        self.model = tf.keras.models.load_model('./models/autoencoder256-best.h5')
+        self.model = tf.keras.models.load_model('./models/autoencoder16.h5')
 
         self.model.summary()
 
@@ -155,6 +155,7 @@ class CodeHandler:
 
         # Display Grad CAM
         superimposed_img.show("gradcam heatmap")
+
 
     #code_handler = CodeHandler()
 

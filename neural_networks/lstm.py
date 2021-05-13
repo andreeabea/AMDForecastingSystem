@@ -3,7 +3,7 @@ import tensorflow_addons as tfa
 from sklearn.metrics import r2_score
 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, ReLU, Dropout, Attention, Activation, Input, Bidirectional, GRU
+from tensorflow.keras.layers import LSTM, Dense, SimpleRNN, ReLU, Dropout, Attention, Activation, Input, Bidirectional, GRU
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 
@@ -35,8 +35,9 @@ class Lstm:
 
     def build_lstm(self):
         model = Sequential()
-        model.add(LSTM(128, input_shape=(self.timesteps, self.nb_features)))
+        model.add(Bidirectional(LSTM(self.nb_features, input_shape=(self.timesteps, self.nb_features))))
         model.add(ReLU())
+        #model.add(Bidirectional(GRU(units=self.nb_features)))
         model.add(Dropout(0.1))
         model.add(Dense(1, activation="sigmoid"))
         return model
@@ -71,11 +72,12 @@ class Lstm:
         """
         model = Sequential()
         # Input layer
-        model.add(GRU(units=128, return_sequences=True,
+        model.add(GRU(units=self.nb_features, return_sequences=True,
                       input_shape=(self.timesteps, self.nb_features)))
         model.add(Dropout(0.2))
         # Hidden layer
-        model.add(GRU(units=128))
+        model.add(GRU(units=self.nb_features, return_sequences=True))
+        model.add(LSTM(units=128))
         model.add(Dropout(0.2))
         model.add(Dense(1, activation='sigmoid'))
         return model

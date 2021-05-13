@@ -109,14 +109,15 @@ def generate_timeseries(data, include_timestamp=False, size=1, features='all'):
                 else:
                     X = X[:, :, features]
     X = X.reshape(-1, X.shape[1] * X.shape[2])
+    Y = Y.reshape(-1)
     if include_timestamp and future_timestamp_array.shape[1] != 0:
         X = np.hstack((X, future_timestamp_array))
 
-    #pca = PCA(16)
+    #pca = PCA(20)
     #X = pca.fit_transform(X)
     #tsne = TSNE(n_components=3, verbose=1, perplexity=25, n_iter=1000, learning_rate=0.1)
     #X = tsne.fit_transform(X)
-    return X, Y.reshape(-1)
+    return X, Y
 
 
 def train_test_val_split(dataX, dataY):
@@ -300,8 +301,8 @@ def lasso_feature_selector(data, include_timestamp=False, features='exclude VA')
 
 
 if __name__ == '__main__':
-    #DatasetBuilder.write_all_data_to_csv("image_data_resampled.csv", datatype='images', include_timestamps=False)
-    include_timestamps = False
+    #DatasetBuilder.write_all_data_to_csv("image_data16.csv", datatype='images', include_timestamps=True)
+    include_timestamps = True
     datatype = 'all'
     if include_timestamps:
         last_column = 'Timestamp'
@@ -309,10 +310,10 @@ if __name__ == '__main__':
             data = pd.read_csv("all_data.csv", index_col=['ID', 'Date'], parse_dates=True)
         else:
             if datatype == 'images':
-                data = pd.read_csv("image_data.csv", index_col=['ID', 'Date'], parse_dates=True)
+                data = pd.read_csv("image_data16.csv", index_col=['ID', 'Date'], parse_dates=True)
             else:
                 num_data = pd.read_csv("all_data.csv", index_col=['ID', 'Date'], parse_dates=True)
-                img_data = pd.read_csv("image_data.csv", index_col=['ID', 'Date'], parse_dates=True)
+                img_data = pd.read_csv("image_data16.csv", index_col=['ID', 'Date'], parse_dates=True)
                 del num_data['Timestamp']
                 del img_data['VA']
                 del img_data['Treatment']
@@ -336,4 +337,9 @@ if __name__ == '__main__':
 
     #voting_regression(data, include_timestamps, 1)
     feature_vector = feature_selector(data, include_timestamps)
-    lstm_regression(data, include_timestamps, 2, feature_vector)
+    # for numerical 2 previous 57.64
+    # GRU - 60
+    # 66 GRU with interpolation
+    #simple GRU 75.38; rmspe: 1.75
+    #to try: predict also the future timestamp!
+    lstm_regression(data, include_timestamps, 2, 'exclude VA')

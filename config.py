@@ -13,7 +13,7 @@ VAL_PATH = os.path.sep.join([BASE_PATH, "validation"])
 TEST_PATH = os.path.sep.join([BASE_PATH, "testing"])
 
 # define the amount of data that will be used training
-TRAIN_SPLIT = 0.6
+TRAIN_SPLIT = 0.7
 # the amount of validation data
 VAL_SPLIT = 0.2
 
