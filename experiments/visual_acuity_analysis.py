@@ -3,7 +3,6 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# reorganise and clean data
 from experiments.image_analysis import ImageAnalysis
 
 
@@ -13,6 +12,7 @@ class VisualAcuityAnalysis:
         #self.img_analysis = ImageAnalysis()
 
     # read chunks of size 3 from .csv
+    # first version of the .csv was used here
     def flow_from_df(self, dataframe: pd.DataFrame, chunk_size: int = 3):
         for start_row in range(0, dataframe.shape[0], chunk_size):
             end_row = min(start_row + chunk_size, dataframe.shape[0])
@@ -35,7 +35,7 @@ class VisualAcuityAnalysis:
         return visualAcuity
 
     def get_visual_acuity_data(self):
-        inputData = pd.read_csv("../data_layer/DMLVAVcuID.csv", nrows=282, header=None)
+        inputData = pd.read_csv("../data_handling/DMLVAVcuID_v1.csv", nrows=282, header=None)
 
         get_chunk = self.flow_from_df(inputData)
         chunk = next(get_chunk)

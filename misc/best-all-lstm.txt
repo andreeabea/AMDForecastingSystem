@@ -1,0 +1,204 @@
+[2.00250824e-01 4.86422231e-01 3.62743415e-01 3.47935969e-01
+ 3.60038030e-01 2.82894752e-01 3.78971957e-01 2.43732285e-01
+ 4.25423218e-01 2.61658680e-01 4.95627335e-01 3.48598573e-01
+ 3.68941583e-01 3.65798589e-01 2.87719381e-01 3.89483389e-01
+ 2.48905745e-01 4.07795672e-01 2.55520786e-01 3.30694530e-01
+ 3.83567735e-01 3.82439498e-01 3.38345171e-01 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 9.79524609e-02 0.00000000e+00
+ 1.15541287e-01 1.16042137e-01 7.01565071e-02 4.21340573e-02
+ 2.04593928e-02 0.00000000e+00 1.28137974e-02 6.26353059e-02
+ 1.34068909e-01 3.97848718e-02 3.51385591e-02 0.00000000e+00
+ 4.12015696e-02 2.94322793e-02 4.02495597e-02 0.00000000e+00
+ 1.60488988e-02 7.63245272e-02 1.84671966e-02 1.40549779e-01
+ 1.28788046e-01 0.00000000e+00 4.04800229e-02 4.06401797e-02
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 8.43592077e-02
+ 5.42744142e-02 3.26285712e-02 8.48493010e-02 3.34679362e-02
+ 1.22115787e-02 1.12834912e-02 0.00000000e+00 3.87240027e-02
+ 3.30710299e-02 0.00000000e+00 8.94505576e-02 4.16612721e-02
+ 1.47548626e-01 1.81927254e-02 4.78966809e-02 7.94686617e-03
+ 8.70887076e-02 6.81553960e-02 0.00000000e+00 1.28694233e-01
+ 6.11134023e-02 2.36585469e-02 1.80510928e-02 9.26721679e-02
+ 2.89581560e-02 3.67374286e-02 0.00000000e+00 0.00000000e+00
+ 4.53186209e-02 0.00000000e+00 4.52691233e-02 7.85015835e-02
+ 4.85739656e-03 2.78677847e-03 0.00000000e+00 4.77203067e-02
+ 0.00000000e+00 9.30880444e-02 0.00000000e+00 8.99797658e-02
+ 1.66746510e-02 6.99980680e-02 2.94965429e-02 2.04899708e-02
+ 3.49991901e-02 0.00000000e+00 7.32776943e-02 0.00000000e+00
+ 8.60928828e-02 1.28714346e-01 8.42739881e-02 7.17343991e-02
+ 2.84628822e-02 6.06224104e-03 3.55248839e-02 0.00000000e+00
+ 4.89717672e-02 1.10609344e-01 3.24498035e-02 0.00000000e+00
+ 1.22913738e-01 1.93272144e-02 3.08315353e-02 3.89813811e-02
+ 0.00000000e+00 9.98935597e-02 7.14264260e-02 0.00000000e+00
+ 9.96157445e-02 0.00000000e+00 5.49319910e-02 0.00000000e+00
+ 0.00000000e+00 2.99957689e-02 0.00000000e+00 0.00000000e+00
+ 7.11172185e-02 0.00000000e+00 2.46823397e-02 0.00000000e+00
+ 2.95264521e-02 3.43753558e-02 6.94604902e-02 5.11613091e-02
+ 9.57264609e-02 6.25681395e-02 3.21528713e-02 1.07583725e-01
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 3.07411739e-02
+ 9.48908260e-02 4.67805482e-04 0.00000000e+00 1.01380413e-01
+ 0.00000000e+00 6.86449418e-02 0.00000000e+00 6.73652261e-03
+ 1.91784763e-02 1.14616947e-01 6.21979505e-02 8.88481105e-03
+ 0.00000000e+00 5.07694389e-02 0.00000000e+00 0.00000000e+00
+ 1.61221855e-02 5.10887052e-02 2.68066557e-02 8.34788710e-03
+ 3.19896650e-02 4.83657650e-02 6.23865573e-02 4.79475344e-02
+ 0.00000000e+00 9.56846376e-02 1.52205294e-01 0.00000000e+00
+ 1.30340793e-01 0.00000000e+00 7.01109807e-02 0.00000000e+00
+ 3.36124201e-02 6.12714270e-02 0.00000000e+00 6.34557211e-03
+ 3.81509708e-02 3.49689700e-02 7.39427575e-03 4.05720471e-02
+ 2.91699427e-02 2.86140620e-01 0.00000000e+00 7.39244035e-02
+ 1.02088007e-01 4.70848170e-02 0.00000000e+00 3.86275827e-02
+ 0.00000000e+00 7.12958988e-03 1.52456098e-01 0.00000000e+00
+ 0.00000000e+00 2.84895838e-02 2.86268821e-02 4.17478009e-02
+ 7.10865879e-02 9.94867130e-02 5.72628477e-02 8.07343134e-02
+ 0.00000000e+00 1.20828777e-02 6.82094892e-02 5.74485167e-02
+ 4.32295926e-02 4.27167107e-02 5.95512368e-02 1.19766211e-01
+ 3.27231820e-03 5.09928321e-02 0.00000000e+00 1.73678053e-02
+ 0.00000000e+00 5.87546897e-02 1.28500071e-01 0.00000000e+00
+ 5.58454752e-03 0.00000000e+00 0.00000000e+00 1.58272174e-03
+ 1.11909231e-01 9.86774298e-02 4.11487661e-02 6.35099366e-02
+ 0.00000000e+00 0.00000000e+00 1.12259878e-01 0.00000000e+00
+ 3.27996408e-02 4.27228389e-02 0.00000000e+00 2.24008282e-02
+ 5.60910407e-04 0.00000000e+00 3.85411191e-02 9.60157149e-02
+ 5.23471820e-02 8.44180258e-02 9.41748945e-04 8.26065192e-02
+ 1.26440046e-01 1.53490698e-02 1.44047703e-01 8.11408257e-02
+ 0.00000000e+00 0.00000000e+00 5.09621341e-02 7.80624256e-02
+ 3.76513678e-02 4.44715327e-02 2.36409236e-02 8.09477562e-02
+ 1.39060599e-01 0.00000000e+00 4.86573630e-02 1.56978537e-02
+ 0.00000000e+00 1.00658078e-01 0.00000000e+00 1.34414006e-01
+ 7.13234385e-03 1.53992223e-01 0.00000000e+00 1.09371661e-01
+ 8.15899650e-02 0.00000000e+00 1.08072953e-01 1.21698053e-01
+ 6.84103239e-02 1.11973020e-01 1.70393833e-02 0.00000000e+00]
+Accuracy: 0.24684185194643743
+Num Features: 28
+Selected Features: [ True  True False False False False False False False  True False False
+ False  True  True  True False  True False  True False  True  True  True
+ False False False False False False False False False False False False
+ False False False False False False  True False False False  True False
+ False False False False False False False False  True False False False
+ False False False False False False False False False False False False
+ False False False False False False False False False False False False
+ False False False False False False False False False False False False
+ False False  True False  True False False False False False False False
+ False False False False False False False False False False False False
+ False False  True False False False False False False False False False
+ False False False False False False False False False False False False
+ False False False False  True False False False False False False False
+ False False False False False False False False False False False False
+ False False False  True False  True False False  True False False False
+ False False False False False False False False False False False False
+ False False False False False False  True False False False False False
+ False False False False False False False False False False False False
+ False False False False False False False False False False  True False
+ False False False False False  True False False False False False False
+ False False False  True False False False False False False False False
+ False False False False  True False False False False False False False
+ False False False False False False False False False False  True False
+ False False  True False]
+Feature Ranking: [  1   1  65  89  42   7  84  31 113   1  11 120  54   1   1   1   3   1
+  99   1  91   1   1   1 148 154 121 155  12 104 126  73  78 136  41  35
+ 108 127  64 183  59  23   1  45 156  97   1  94 100 111 170 219 131  83
+  76 142   1  67 105 106 145  58 229 194 210 212  15  16 165 205 226 167
+  51  29 236 174  22 161 223  92  77 209  56  39 235  88  18  53 241 218
+  43  93 228 242 252 112 239 101   1 248   1 234 246 247  85  75 151 133
+ 245 243 204 214 220 230 238  90  82  70 139 153 149  72   1 130   9 164
+ 157  47 109 175 177 179  14 184 187 189  40  27 249 253  79  28  55  20
+  50 202 181 206   1 200 158  34 227 203 215 182 192 141   6 159 147  86
+  30 163   2 168 173   8 176  37  10   1 185   1  52 144   1  98  17  95
+ 199  48 114  81 191 125 119  24 198  74 201 250 186 217 222  44 244 232
+   1 225 208  71  87 211 162 171  68 193 190  60  33  49  61 134 196  21
+ 160 107  46 166 103 233 213 231  96 221   1 240  63   4 237  36 224   1
+ 251 169  69 172 197 216 188 117 207   1 195  32  25 124 128 152 102 140
+  19 178  66  62   1 180 115 150  26 135 146 138 137  13 143   5 129 116
+  38 122  57 123   1 118 110 132   1  80]
+[1, 2, 10, 14, 15, 16, 18, 20, 22, 23, 24, 43, 47, 57, 99, 101, 123, 149, 172, 174, 177, 199, 227, 234, 244, 257, 275, 279]
+2021-05-18 02:02:32.313707: I tensorflow/compiler/jit/xla_cpu_device.cc:41] Not creating XLA devices, tf_xla_enable_xla_devices not set
+2021-05-18 02:02:32.316128: W tensorflow/stream_executor/platform/default/dso_loader.cc:60] Could not load dynamic library 'nvcuda.dll'; dlerror: nvcuda.dll not found
+2021-05-18 02:02:32.316445: W tensorflow/stream_executor/cuda/cuda_driver.cc:326] failed call to cuInit: UNKNOWN ERROR (303)
+2021-05-18 02:02:32.321598: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:169] retrieving CUDA diagnostic information for host: DESKTOP-CEPFD6B
+2021-05-18 02:02:32.321984: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:176] hostname: DESKTOP-CEPFD6B
+2021-05-18 02:02:32.322581: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2021-05-18 02:02:32.323856: I tensorflow/compiler/jit/xla_gpu_device.cc:99] Not creating XLA devices, tf_xla_enable_xla_devices not set
+2021-05-18 02:02:32.509863: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:116] None of the MLIR optimization passes are enabled (registered 2)
+Epoch 1/500
+18/18 - 8s - loss: 0.1374 - mean_absolute_error: 0.3412 - mean_squared_error: 0.1374 - root_mean_squared_error: 0.3681 - val_loss: 0.1108 - val_mean_absolute_error: 0.3135 - val_mean_squared_error: 0.1108 - val_root_mean_squared_error: 0.3303
+Epoch 2/500
+18/18 - 0s - loss: 0.1050 - mean_absolute_error: 0.2938 - mean_squared_error: 0.1050 - root_mean_squared_error: 0.3150 - val_loss: 0.0804 - val_mean_absolute_error: 0.2627 - val_mean_squared_error: 0.0804 - val_root_mean_squared_error: 0.2795
+Epoch 3/500
+18/18 - 0s - loss: 0.0831 - mean_absolute_error: 0.2516 - mean_squared_error: 0.0831 - root_mean_squared_error: 0.2779 - val_loss: 0.0675 - val_mean_absolute_error: 0.2299 - val_mean_squared_error: 0.0675 - val_root_mean_squared_error: 0.2516
+Epoch 4/500
+18/18 - 0s - loss: 0.0679 - mean_absolute_error: 0.2213 - mean_squared_error: 0.0679 - root_mean_squared_error: 0.2526 - val_loss: 0.0619 - val_mean_absolute_error: 0.2132 - val_mean_squared_error: 0.0619 - val_root_mean_squared_error: 0.2375
+Epoch 5/500
+18/18 - 0s - loss: 0.0557 - mean_absolute_error: 0.2018 - mean_squared_error: 0.0557 - root_mean_squared_error: 0.2284 - val_loss: 0.0595 - val_mean_absolute_error: 0.2092 - val_mean_squared_error: 0.0595 - val_root_mean_squared_error: 0.2330
+Epoch 6/500
+18/18 - 0s - loss: 0.0442 - mean_absolute_error: 0.1778 - mean_squared_error: 0.0442 - root_mean_squared_error: 0.2039 - val_loss: 0.0567 - val_mean_absolute_error: 0.1976 - val_mean_squared_error: 0.0567 - val_root_mean_squared_error: 0.2237
+Epoch 7/500
+18/18 - 0s - loss: 0.0376 - mean_absolute_error: 0.1594 - mean_squared_error: 0.0376 - root_mean_squared_error: 0.1855 - val_loss: 0.0556 - val_mean_absolute_error: 0.1899 - val_mean_squared_error: 0.0556 - val_root_mean_squared_error: 0.2188
+Epoch 8/500
+18/18 - 0s - loss: 0.0333 - mean_absolute_error: 0.1422 - mean_squared_error: 0.0333 - root_mean_squared_error: 0.1753 - val_loss: 0.0553 - val_mean_absolute_error: 0.1851 - val_mean_squared_error: 0.0553 - val_root_mean_squared_error: 0.2163
+Epoch 9/500
+18/18 - 0s - loss: 0.0304 - mean_absolute_error: 0.1336 - mean_squared_error: 0.0304 - root_mean_squared_error: 0.1712 - val_loss: 0.0552 - val_mean_absolute_error: 0.1821 - val_mean_squared_error: 0.0552 - val_root_mean_squared_error: 0.2150
+Epoch 10/500
+18/18 - 0s - loss: 0.0288 - mean_absolute_error: 0.1301 - mean_squared_error: 0.0288 - root_mean_squared_error: 0.1640 - val_loss: 0.0556 - val_mean_absolute_error: 0.1823 - val_mean_squared_error: 0.0556 - val_root_mean_squared_error: 0.2153
+Epoch 11/500
+18/18 - 0s - loss: 0.0270 - mean_absolute_error: 0.1210 - mean_squared_error: 0.0270 - root_mean_squared_error: 0.1545 - val_loss: 0.0541 - val_mean_absolute_error: 0.1758 - val_mean_squared_error: 0.0541 - val_root_mean_squared_error: 0.2115
+Epoch 12/500
+18/18 - 0s - loss: 0.0252 - mean_absolute_error: 0.1171 - mean_squared_error: 0.0252 - root_mean_squared_error: 0.1494 - val_loss: 0.0538 - val_mean_absolute_error: 0.1756 - val_mean_squared_error: 0.0538 - val_root_mean_squared_error: 0.2106
+Epoch 13/500
+18/18 - 0s - loss: 0.0243 - mean_absolute_error: 0.1137 - mean_squared_error: 0.0243 - root_mean_squared_error: 0.1500 - val_loss: 0.0541 - val_mean_absolute_error: 0.1742 - val_mean_squared_error: 0.0541 - val_root_mean_squared_error: 0.2103
+Epoch 14/500
+18/18 - 0s - loss: 0.0244 - mean_absolute_error: 0.1131 - mean_squared_error: 0.0244 - root_mean_squared_error: 0.1471 - val_loss: 0.0535 - val_mean_absolute_error: 0.1715 - val_mean_squared_error: 0.0535 - val_root_mean_squared_error: 0.2089
+Epoch 15/500
+18/18 - 0s - loss: 0.0228 - mean_absolute_error: 0.1091 - mean_squared_error: 0.0228 - root_mean_squared_error: 0.1430 - val_loss: 0.0543 - val_mean_absolute_error: 0.1732 - val_mean_squared_error: 0.0543 - val_root_mean_squared_error: 0.2099
+Epoch 16/500
+18/18 - 0s - loss: 0.0221 - mean_absolute_error: 0.1054 - mean_squared_error: 0.0221 - root_mean_squared_error: 0.1367 - val_loss: 0.0548 - val_mean_absolute_error: 0.1701 - val_mean_squared_error: 0.0548 - val_root_mean_squared_error: 0.2104
+Epoch 17/500
+18/18 - 0s - loss: 0.0219 - mean_absolute_error: 0.1040 - mean_squared_error: 0.0219 - root_mean_squared_error: 0.1430 - val_loss: 0.0544 - val_mean_absolute_error: 0.1701 - val_mean_squared_error: 0.0544 - val_root_mean_squared_error: 0.2094
+Evaluate on test data
+1/1 [==============================] - 0s 34ms/step - loss: 0.0120 - mean_absolute_error: 0.0710 - mean_squared_error: 0.0120 - root_mean_squared_error: 0.1094
+test loss: [0.011964878998696804, 0.07101850211620331, 0.011964878998696804, 0.10938408970832825]
+Predict ...
+predicted value:  [[0.38832086]
+ [0.60209733]
+ [0.6483459 ]
+ [0.5759543 ]
+ [0.16762224]
+ [0.05708626]
+ [0.07626072]
+ [0.10585538]
+ [0.6423137 ]
+ [0.5449304 ]
+ [0.01417059]
+ [0.01593864]
+ [0.02595723]
+ [0.04960826]
+ [0.06697267]
+ [0.07205987]
+ [0.06793278]
+ [0.07877856]
+ [0.07110977]
+ [0.05042177]
+ [0.04806238]]
+testX :  [[[1.         0.125      0.13573883 ... 0.9426153  0.         0.32041885]]
+
+ [[0.         0.1099537  0.12542955 ... 0.34329645 0.         0.05863874]]
+
+ [[0.         0.11226852 0.12886598 ... 0.63300996 0.         0.32041885]]
+
+ ...
+
+ [[1.         0.14814815 0.15635739 ... 0.         0.24655758 0.2565445 ]]
+
+ [[1.         0.16319444 0.21993127 ... 0.11468002 0.10905874 0.25026178]]
+
+ [[1.         0.38310185 0.34879725 ... 0.05417771 0.10985065 0.05968586]]]
+testY:  [0.5        0.625      0.8        0.31746032 0.05       0.025
+ 0.05       0.05       0.625      0.5        0.01       0.01
+ 0.01       0.01       0.025      0.025      0.2        0.4
+ 0.05       0.05       0.025     ]
+(21, 1)
+(21, 1)
+RMSPE: 
+tf.Tensor(1.3219222760155984, shape=(), dtype=float64)
+Compute R^2 ...
+0.8115436976790951

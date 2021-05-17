@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras import Input
 from tensorflow.keras.optimizers import Adam
 
-from data_layer.build_dataset_v1 import split_data
+from data_handling.build_dataset_v1 import split_data
 
 trainX, validX, testX = split_data()
 

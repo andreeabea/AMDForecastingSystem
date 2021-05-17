@@ -1,5 +1,4 @@
 import tensorflow as tf
-import tensorflow_addons as tfa
 from sklearn.metrics import r2_score
 
 from tensorflow.keras.models import Sequential
@@ -8,11 +7,13 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 
 import matplotlib.pyplot as plt
+from tensorflow.keras.regularizers import l2
 
 
-class Lstm:
+class Rnn:
 
-    def __init__(self, trainX, trainY, validX, validY, testX, testY, timesteps=1, nb_features=23):
+    def __init__(self, trainX, trainY, validX, validY, testX, testY, timesteps=1, nb_features=23,
+                 nn_type='lstm', custom=True):
         self.nb_sequences = 1
         self.timesteps = timesteps
         if trainX is not None and trainY is not None and validX is not None \
@@ -31,13 +32,27 @@ class Lstm:
         else:
             self.nb_features = nb_features
 
-        self.model = self.build_lstm()
+        if custom:
+            self.model = self.build_rnn(nn_type)
+        else:
+            if nn_type == 'bilstm':
+                self.model = self.build_bilstm()
+            else:
+                if nn_type == 'gru':
+                    self.model = self.build_gru()
 
-    def build_lstm(self):
+    def build_rnn(self, nn_type):
         model = Sequential()
-        model.add(Bidirectional(LSTM(self.nb_features, input_shape=(self.timesteps, self.nb_features))))
+        if nn_type == 'lstm':
+            model.add(Bidirectional(LSTM(self.nb_features, input_shape=(self.timesteps, self.nb_features))))
+        else:
+            if nn_type == 'gru':
+                model.add(Bidirectional(GRU(self.nb_features, input_shape=(self.timesteps, self.nb_features))))
+            else:
+                model.add(Bidirectional(SimpleRNN(self.nb_features, input_shape=(self.timesteps, self.nb_features))))
+
         model.add(ReLU())
-        #model.add(Bidirectional(GRU(units=self.nb_features)))
+        #model.add(Bidirectional(LSTM(units=self.nb_features)))
         model.add(Dropout(0.1))
         model.add(Dense(1, activation="sigmoid"))
         return model
@@ -52,7 +67,7 @@ class Lstm:
         model = Model(input_layer, output_layer)
         return model
 
-    def create_bilstm(self):
+    def build_bilstm(self):
         """
         adapted from https://towardsdatascience.com/predictive-analytics-time-series-forecasting-with-gru-and-bilstm-in-tensorflow-87588c852915
         """
@@ -66,7 +81,7 @@ class Lstm:
         model.add(Dense(1, activation="sigmoid"))
         return model
 
-    def create_gru(self):
+    def build_gru(self):
         """
         adapted from https://towardsdatascience.com/predictive-analytics-time-series-forecasting-with-gru-and-bilstm-in-tensorflow-87588c852915
         """
@@ -78,7 +93,7 @@ class Lstm:
         # Hidden layer
         model.add(GRU(units=self.nb_features, return_sequences=True))
         model.add(LSTM(units=128))
-        model.add(Dropout(0.2))
+        model.add(Dropout(0.1))
         model.add(Dense(1, activation='sigmoid'))
         return model
 
@@ -92,16 +107,21 @@ class Lstm:
 
     @staticmethod
     def rmspe(y_true, y_pred):
+        # root_mean_squared_percentage_error
         pct_var = (y_true - y_pred) / (y_true + 0.0000001)
         return K.sqrt(K.mean(K.square(pct_var)))
 
+    @staticmethod
+    def root_mean_squared_error(y_true, y_pred):
+        return K.sqrt(K.mean(K.square(y_pred - y_true)))
+
     def train(self):
-        # MAE performed better than MSE or others
         self.model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
-                                                                                  'mean_squared_error'])
+                                                                                  'mean_squared_error',
+                                                                                  self.root_mean_squared_error])
 
         my_callbacks = [
-            tf.keras.callbacks.ModelCheckpoint(filepath='../models/lstm-va.h5'),
+            tf.keras.callbacks.ModelCheckpoint(filepath='../models/rnn.h5'),
             tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
         ]
 

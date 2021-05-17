@@ -13,14 +13,14 @@ from tslearn.preprocessing import TimeSeriesResampler
 from tslearn.utils import to_time_series_dataset
 
 import config
-from data_layer.build_dataset_v1 import read_all_images, reshape_images
-from code_handler import CodeHandler
+from data_handling.build_dataset_v1 import read_all_images, reshape_images
+from data_handling.latent_code_handler import LatentCodeHandler
 
 
 class ImageAnalysis:
 
     def __init__(self):
-        self.code_handler = CodeHandler()
+        self.code_handler = LatentCodeHandler('../models/autoencoder256-best.h5')
         self.image_width = self.code_handler.image_width
         self.image_height = self.code_handler.image_height
 
@@ -45,7 +45,7 @@ class ImageAnalysis:
         plt.ylabel('component 2')
         plt.savefig("plot-pca2.png")
 
-    def tSNE(self, data, datatype):
+    def tSNE(self, data, datatype='images'):
         # first reduce dimensionality - if the given data are images
         if datatype == 0:
             pca = PCA(256)
@@ -133,10 +133,10 @@ class ImageAnalysis:
             plt.scatter(projected[:, 0], projected[:, 1], alpha=0.5, color=color)
             plt.xlabel('component 1')
             plt.ylabel('component 2')
-            plt.savefig("plots/sequence-clusters-pca.png")
+            plt.savefig("../plots/sequence-clusters-pca.png")
 
     # Dynamic Time Warping Clustering using TrendyPy library
-    def dtw_clustering(self, sequences, nb_clusters):
+    def dtw_clustering(self, sequences, nb_clusters=2):
         trendy = Trendy(n_clusters=nb_clusters)
         trendy.fit(sequences)
         labels = trendy.labels_
@@ -195,14 +195,15 @@ class ImageAnalysis:
 
         return dict(zip(keys, labels))
 
-    def dimensionality_reduction(self):
+    def dimensionality_reduction(self, method='images'):
         # 2 approaches: apply dimensionality reduction on images or on codes obtained from the autoencoder's latent space
         x, y, images = read_all_images()
         images = self.reshape_images_pca(images)
         images = images/255
-        #latent_codes = get_latent_codes(images)
+        if method == 'codes':
+            images = self.code_handler.get_latent_codes(images)
         #pca2(images)
-        self.tSNE(images, 0)
+        self.tSNE(images, method)
 
         self.find_cum_explained_variance(images)
 
@@ -212,6 +213,6 @@ if __name__ == '__main__':
 
     code_sequences = img_analysis.get_latent_code_sequences()
     labels = img_analysis.dtw_clustering(code_sequences)
-    #img_analysis.plot_sequence_clusters(code_sequences, labels)
+    img_analysis.plot_sequence_clusters(code_sequences, labels)
 
     #img_analysis.dimensionality_reduction()

@@ -14,7 +14,7 @@ import numpy as np
 from scipy.stats import pearsonr
 from scipy.stats import spearmanr
 
-from data_layer.build_dataset_v1 import create_sequences, find_visual_acuity, append_va_to_features
+from data_handling.build_dataset_v1 import create_sequences, find_visual_acuity, append_va_to_features
 from neural_networks.lstm_initial import Lstm
 
 from visual_acuity_analysis import VisualAcuityAnalysis
@@ -107,7 +107,8 @@ class RetinaFeatureAnalysis:
 
         return labels
 
-    def find_correlation(self, feature1, feature2):
+    # compute the correlation between 2 features in a sequence
+    def find_correlation(self, feature1, feature2, method='pearson'):
         correlation = 0
         valid_series = 0
         len_feature1 = len(feature1)
@@ -117,7 +118,11 @@ class RetinaFeatureAnalysis:
         while i < len_feature1 and j < len_feature2:
             if len(feature1[i]) == len(feature2[j]):
                 #plt.scatter(feature1[i], feature2[i])
-                r, p = spearmanr(feature1[i], feature2[j])
+                if method == 'pearson':
+                    r, p = pearsonr(feature1[i], feature2[j])
+                else:
+                    if method == 'spearman':
+                        r, p = spearmanr(feature1[i], feature2[j])
                 if math.isnan(r) == False:
                     correlation += r
                     valid_series += 1
@@ -213,6 +218,7 @@ class RetinaFeatureAnalysis:
         accuracy = float(accuracy) / len(labels)
         print("accuracy: ", accuracy)
 
+    # method to compute all feature correlations with the visual acuity
     def compute_correlations_with_va(self):
         feature_names = [RetinaFeatureAnalysis.THICKNESS_FEATURE,
                          RetinaFeatureAnalysis.VOLUME_FEATURE,

@@ -11,22 +11,20 @@ from tensorflow.keras import backend as K, preprocessing
 from tensorflow.python.keras import Input
 
 
-class CodeHandler:
+class LatentCodeHandler:
 
-    def __init__(self):
+    def __init__(self, model_path):
         self.image_width = 256
         self.image_height = 256
 
-        self.model = tf.keras.models.load_model('./models/autoencoder16.h5')
+        self.model = tf.keras.models.load_model(model_path)
 
         self.model.summary()
 
     def get_latent_codes(self, images):
         encoder_output = self.model.get_layer("encoded").output
-
         encoder_model = Model(self.model.input, encoder_output)
         latent_codes = encoder_model.predict(images)
-
         return latent_codes
 
     # TODO: not working - to predict next image in sequence
@@ -155,11 +153,3 @@ class CodeHandler:
 
         # Display Grad CAM
         superimposed_img.show("gradcam heatmap")
-
-
-    #code_handler = CodeHandler()
-
-    #test = code_handler.get_test_images()
-    #code_handler.reconstruct_images(test)
-
-    #code_handler.get_gradcam_heatmap(test)

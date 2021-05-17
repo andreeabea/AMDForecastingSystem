@@ -9,7 +9,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import backend
 import numpy as np
 
-from data_layer.build_dataset_v1 import split_data
+from data_handling.build_dataset_v1 import split_data
 
 
 class Autoencoder:
@@ -28,7 +28,7 @@ class Autoencoder:
 
         self.model = self.build_autoencoder()
 
-    # autoencoder taken from: https://github.com/HelloJahid/Biomedical-Image-Denoising/ and slightly changed
+    # autoencoder adapted from: https://github.com/HelloJahid/Biomedical-Image-Denoising/
     def build_autoencoder(self):
         # define model
         input_layer = Input(self.input_shape)

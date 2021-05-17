@@ -7,7 +7,7 @@ from PIL import Image, ImageOps
 import config
 import numpy as np
 
-from experiments.code_handler import CodeHandler
+from data_handling.latent_code_handler import LatentCodeHandler
 from datetime import datetime
 
 
@@ -35,7 +35,7 @@ def read_images_lstm(eyeData=None):
     x = -1
     y = -1
 
-    code_handler = CodeHandler()
+    code_handler = LatentCodeHandler('../models/autoencoder256-best.h5')
 
     for patient in os.scandir(config.ORIG_INPUT_DATASET):
         visits = len(list(os.scandir(patient)))

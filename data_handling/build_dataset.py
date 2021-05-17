@@ -10,12 +10,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import config
-from oct_feature_extraction import OCTFeatureExtractor
+from data_handling.oct_feature_extraction import OCTFeatureExtractor
 
 
 class DatasetBuilder:
 
     def __init__(self, path):
+        # display options for pandas dataframes
         pd.set_option('display.max_rows', None)
         pd.set_option('display.max_columns', None)
         pd.options.display.float_format = '{:,.2f}'.format
@@ -28,6 +29,7 @@ class DatasetBuilder:
 
     @staticmethod
     def handle_bold_cells(path):
+        # method to find the bold cells in the excel file, those represent when the patient received treatment
         workbook = xlrd.open_workbook(path, formatting_info=True)
         sheet = workbook.sheet_by_index(0)
         new_wb = copy(workbook)
@@ -37,6 +39,7 @@ class DatasetBuilder:
                 format = workbook.xf_list[cell.xf_index]
                 if workbook.font_list[format.font_index].weight == 700:
                     print(str(cell.value) + " t")
+                    # add a 't' into the bold cells to recognize them when working with dataframes
                     new_wb.get_sheet(0).write(row, col, str(cell.value) + " t", Style.easyxf("font: bold on;"))
 
         new_wb.save(path)
@@ -84,6 +87,7 @@ class DatasetBuilder:
             try:
                 patientID = chunk.iloc[1][1]
 
+                # handle special cases
                 if patientID == 8615:
                     patientID = '276'
 
@@ -152,6 +156,7 @@ class DatasetBuilder:
 
     def resample_time_series(self):
         self.data = self.data.reset_index(level='ID')
+        # resample the visits of each timeseries such that they take place monthly
         self.data = self.data.groupby('ID').resample('M').mean()
         self.data['Treatment'] = self.data['Treatment'].fillna(0)
         self.data = self.data.interpolate()
@@ -203,10 +208,12 @@ class DatasetBuilder:
             first_index = None
             last_index = None
             for feature_name in self.retina_features:
+                # find first and last row index where the feature exists, on each feature column
                 first_valid = group[feature_name].first_valid_index()
                 last_valid = group[feature_name].last_valid_index()
                 if first_valid is None or last_valid is None:
                     continue
+                # find the first and last valid index for the entire timeseries
                 if group.index.get_loc(first_valid) > first:
                     first = group.index.get_loc(first_valid)
                     first_index = first_valid

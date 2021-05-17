@@ -8,7 +8,7 @@ import config
 import pandas as pd
 import numpy as np
 
-from experiments.code_handler import CodeHandler
+from data_handling.latent_code_handler import LatentCodeHandler
 
 
 class OCTFeatureExtractor:
@@ -81,7 +81,7 @@ class OCTFeatureExtractor:
     def get_images_df(self):
         df = pd.DataFrame()
 
-        code_handler = CodeHandler()
+        code_handler = LatentCodeHandler('../models/autoencoder256-best.h5')
 
         for patient in os.scandir(config.ORIG_INPUT_DATASET):
             visits = len(list(os.scandir(patient)))
@@ -127,8 +127,3 @@ class OCTFeatureExtractor:
         images = np.vstack(images)
         images = images.reshape(-1, x, y, 1)
         return images
-
-
-if __name__ == '__main__':
-    feature_extractor = OCTFeatureExtractor()
-    print(feature_extractor.get_images_df())
