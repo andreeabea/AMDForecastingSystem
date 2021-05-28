@@ -1,7 +1,7 @@
 import numpy as np
 
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.feature_selection import mutual_info_regression, RFE
+from sklearn.feature_selection import mutual_info_regression, RFE, RFECV
 from sklearn.linear_model import LassoCV
 from sklearn.model_selection import KFold, cross_val_score
 
@@ -12,8 +12,8 @@ class FeatureSelector:
         self.data = data
         self.gen = gen
 
-    def rfe(self, datatype='all', include_timestamp=False, previous_visits=1, features='exclude VA'):
-        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
+    def rfe(self, datatype='all', include_timestamp=False, features='exclude VA'):
+        X, Y = self.gen.generate_timeseries(include_timestamp, 1, features)
         print(mutual_info_regression(X, Y))
         model = GradientBoostingRegressor()
         # for numerical and image data 28 - 53.21
@@ -33,16 +33,45 @@ class FeatureSelector:
         print("Selected Features: %s" % fit.support_)
         print("Feature Ranking: %s" % fit.ranking_)
 
+        if features == 'exclude VA':
+            offset = 1
+        else:
+            offset = 0
+
         feature_vector = []
         for i in range(len(fit.support_)):
             if fit.support_[i]:
-                feature_vector.append(i + 1)
+                feature_vector.append(i + offset)
+        print(feature_vector)
+
+        return feature_vector
+
+    def rfecv(self, include_timestamp=False, features='exclude VA'):
+        X, Y = self.gen.generate_timeseries(include_timestamp, 1, features)
+        print(mutual_info_regression(X, Y))
+        model = GradientBoostingRegressor()
+        model = RFECV(estimator=model, step=1, cv=10)
+        fit = model.fit(X, Y)
+
+        print("Num Features: %d" % fit.n_features_)
+        print("Selected Features: %s" % fit.support_)
+        print("Feature Ranking: %s" % fit.ranking_)
+
+        if features == 'exclude VA':
+            offset = 1
+        else:
+            offset = 0
+
+        feature_vector = []
+        for i in range(len(fit.support_)):
+            if fit.support_[i]:
+                feature_vector.append(i + offset)
         print(feature_vector)
 
         return feature_vector
 
     def lasso_feature_selector(self, include_timestamp=False, features='exclude VA'):
-        X, Y = self.gen.generate_timeseries(self.data, include_timestamp, 1, features)
+        X, Y = self.gen.generate_timeseries(include_timestamp, 1, features)
 
         lasso = LassoCV(normalize=True)
         lasso.fit(X, Y)
@@ -51,10 +80,15 @@ class FeatureSelector:
         importance_vector = lasso.coef_
         print(importance_vector)
 
+        if features == 'exclude VA':
+            offset = 1
+        else:
+            offset = 0
+
         feature_vector = []
         for i in range(len(importance_vector)):
             if importance_vector[i] != 0:
-                feature_vector.append(i + 1)
+                feature_vector.append(i + offset)
         print(feature_vector)
 
         return feature_vector

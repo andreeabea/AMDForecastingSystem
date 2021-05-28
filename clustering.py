@@ -1,9 +1,12 @@
 from sklearn.preprocessing import MinMaxScaler
 from trendypy.trendy import Trendy
 from tslearn.clustering import TimeSeriesKMeans, KernelKMeans
+from tslearn.preprocessing import TimeSeriesResampler
 from tslearn.utils import to_time_series_dataset
 import matplotlib.pyplot as plt
 import pandas as pd
+
+from data_handling.db_handler import DbHandler
 
 
 class TimeSeriesClustering:
@@ -11,13 +14,14 @@ class TimeSeriesClustering:
     def __init__(self, data):
         self.data = data
         self.sequences = self.data.groupby('ID').apply(pd.DataFrame.to_numpy).to_numpy().tolist()
+        self.sequences = [ts for ts in self.sequences if ts.shape[0] > 1]
 
     def dtw_kmeans_clustering(self, nb_clusters=2):
         print("Kmeans with DTW clustering ...")
         sequences = to_time_series_dataset(self.sequences)
         km = TimeSeriesKMeans(n_clusters=nb_clusters, metric="dtw")
         labels = km.fit_predict(sequences)
-
+        self.plot_clusters(km, labels)
         self.compute_accuracy(labels)
 
     def dtw_clustering(self, nb_clusters=2):
@@ -39,10 +43,11 @@ class TimeSeriesClustering:
     def get_actual_labels(self):
         actual_labels = []
         for nb, group in self.data.groupby('ID'):
-            actual_label = 0
-            if group['VA'].iloc[0] >= group['VA'].iloc[group.shape[0] - 1]:
-                actual_label = 1
-            actual_labels.append(actual_label)
+            if group.index.size != 1:
+                actual_label = 0
+                if group['VA'].iloc[0] >= group['VA'].iloc[group.shape[0] - 1]:
+                    actual_label = 1
+                actual_labels.append(actual_label)
 
         return actual_labels
 
@@ -79,10 +84,28 @@ class TimeSeriesClustering:
 
         plt.show()
 
+    # source: https://tslearn.readthedocs.io/en/stable/auto_examples/clustering/plot_kmeans.html#sphx-glr-auto-examples-clustering-plot-kmeans-py
+    def plot_clusters(self, km, labels):
+        size = 16
+        resampled_ts = TimeSeriesResampler(sz=size).fit_transform(self.sequences)
+        for yi in range(2):
+            plt.subplot(3, 3, 4 + yi)
+            for xx in resampled_ts[labels == yi]:
+                plt.plot(xx.ravel(), "k-", alpha=.2)
+            plt.plot(km.cluster_centers_[yi].ravel(), "r-")
+            plt.xlim(0, size)
+            plt.ylim(0, 4)
+            plt.text(0.55, 0.85, 'Cluster %d' % (yi + 1),
+                     transform=plt.gca().transAxes)
+        plt.show()
+
 
 if __name__ == '__main__':
-    data = pd.read_csv("preprocessed_data/image_data.csv", index_col=['ID', 'Date'], parse_dates=True)
-    data[data.columns] = MinMaxScaler().fit_transform(data)
+    datatype = 'images'
+    include_timestamps = False
+
+    db_handler = DbHandler(datatype, include_timestamps)
+    data = db_handler.get_data_from_csv()
 
     ts_clustering = TimeSeriesClustering(data)
 

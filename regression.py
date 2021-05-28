@@ -85,14 +85,13 @@ class TimeSeriesRegressor:
         #        testX.reshape(-1, testX.shape[1]*testX.shape[2]), testY.reshape(-1)
         return trainX, trainY, validX, validY, testX, testY
 
-    def svr_regression(self):
-        X, Y = self.gen.generate_timeseries(False)
+    def svr_regression(self, include_timestamp=False, previous_visits=1, features='all'):
+        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
 
-        gbr = SVR()
+        svr = SVR()
         cv = KFold(n_splits=10)
-        n_scores = cross_val_score(gbr, X, Y, cv=cv, n_jobs=-1)
+        n_scores = cross_val_score(svr, X, Y, cv=cv, n_jobs=-1)
         print('R^2: ' + str(np.mean(n_scores)))
-        self.plot_feature_importances(gbr.fit(X, Y), X.shape[1])
 
     def gradient_boosted_regression(self, include_timestamp=False, previous_visits=1, features='all'):
         X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
@@ -104,14 +103,25 @@ class TimeSeriesRegressor:
         fit = gbr.fit(X, Y)
         self.plot_feature_importances(fit, X.shape[1])
 
-    def extratrees_regression(self, include_timestamp=False):
-        X, Y = self.gen.generate_timeseries(include_timestamp)
+    def random_forest_regression(self, include_timestamp=False, previous_visits=1, features='all'):
+        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
+        gbr = RandomForestRegressor()
 
-        gbr = ExtraTreesRegressor()
         cv = KFold(n_splits=10)
         n_scores = cross_val_score(gbr, X, Y, cv=cv, n_jobs=-1)
         print('R^2: ' + str(np.mean(n_scores)))
-        self.plot_feature_importances(gbr.fit(X, Y), X.shape[1])
+        fit = gbr.fit(X, Y)
+        self.plot_feature_importances(fit, X.shape[1])
+
+    def extratrees_regression(self, include_timestamp=False, previous_visits=1, features='all'):
+        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
+        gbr = ExtraTreesRegressor()
+
+        cv = KFold(n_splits=10)
+        n_scores = cross_val_score(gbr, X, Y, cv=cv, n_jobs=-1)
+        print('R^2: ' + str(np.mean(n_scores)))
+        fit = gbr.fit(X, Y)
+        self.plot_feature_importances(fit, X.shape[1])
 
     def lasso_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
         X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
@@ -199,12 +209,17 @@ if __name__ == '__main__':
 
     reg = TimeSeriesRegressor(data)
 
-    feature_selector = FeatureSelector(data, reg.gen)
-    feature_vector = feature_selector.rfe(datatype, include_timestamps)
-
+    #feature_selector = FeatureSelector(data, reg.gen)
+    #feature_vector = feature_selector.lasso_feature_selector(include_timestamps)
+    #feature_vector = feature_selector.rfe(datatype, include_timestamps)
+    #feature_vector = [1, 2, 10, 14, 15, 16, 18, 20, 22, 23, 24, 43, 47, 57, 99, 101, 123, 149, 172, 174, 177, 199, 227, 234, 244, 257, 275, 279]
+    #feature_vector = [11, 12, 14, 18, 20, 22, 23]
     # for numerical 2 previous 57.64
     #simple GRU 75.38; rmspe: 1.47
     #my lstm 73.7
     # gru resampled 73.94
     #to try: predict also the future timestamp!
-    reg.rnn_regression(include_timestamps, 2, feature_vector, 'lstm', custom=True)
+    #reg.rnn_regression(include_timestamps, 2, [0, 1], 'lstm', custom=True)
+    for i in range(1, 4):
+        #reg.gradient_boosted_regression(include_timestamps, i, feature_vector)
+        reg.rnn_regression(include_timestamps, i, 'exclude VA', 'gru', custom=True)

@@ -7,7 +7,6 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 
 import matplotlib.pyplot as plt
-from tensorflow.keras.regularizers import l2
 
 
 class Rnn:
@@ -35,7 +34,7 @@ class Rnn:
         if custom:
             self.model = self.build_rnn(nn_type)
         else:
-            if nn_type == 'bilstm':
+            if nn_type == 'lstm':
                 self.model = self.build_bilstm()
             else:
                 if nn_type == 'gru':
@@ -44,7 +43,9 @@ class Rnn:
     def build_rnn(self, nn_type):
         model = Sequential()
         if nn_type == 'lstm':
-            model.add(Bidirectional(LSTM(self.nb_features, input_shape=(self.timesteps, self.nb_features))))
+            model.add(Bidirectional(LSTM(self.nb_features,
+                                         input_shape=(self.timesteps, self.nb_features))))
+                                         #recurrent_regularizer='l1')))
         else:
             if nn_type == 'gru':
                 model.add(Bidirectional(GRU(self.nb_features, input_shape=(self.timesteps, self.nb_features))))
@@ -52,14 +53,13 @@ class Rnn:
                 model.add(Bidirectional(SimpleRNN(self.nb_features, input_shape=(self.timesteps, self.nb_features))))
 
         model.add(ReLU())
-        #model.add(Bidirectional(LSTM(units=self.nb_features)))
         model.add(Dropout(0.1))
-        model.add(Dense(1, activation="sigmoid"))
+        model.add(Dense(1, activation="sigmoid"))# activity_regularizer=tf.keras.regularizers.l1_l2(l1=0.01, l2=0.01)))
         return model
 
     def build_attention_lstm(self):
         input_layer = Input((self.timesteps, self.nb_features))
-        lstm = LSTM(128, input_shape=(self.timesteps, self.nb_features))(input_layer)
+        lstm = Bidirectional(LSTM(self.nb_features, input_shape=(self.timesteps, self.nb_features)))(input_layer)
         relu = Activation('relu')(lstm)
         dropout = Dropout(0.1)(relu)
         attention = Attention()([lstm, dropout])
