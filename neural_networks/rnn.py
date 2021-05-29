@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 class Rnn:
 
     def __init__(self, trainX, trainY, validX, validY, testX, testY, timesteps=1, nb_features=23,
-                 nn_type='lstm', custom=True):
+                 nn_type='lstm', custom=True, model=None):
         self.nb_sequences = 1
         self.timesteps = timesteps
         if trainX is not None and trainY is not None and validX is not None \
@@ -31,7 +31,12 @@ class Rnn:
         else:
             self.nb_features = nb_features
 
-        if custom:
+        if model is not None:
+            self.model = model
+            self.model.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
+                                                                                     'mean_squared_error',
+                                                                                     self.root_mean_squared_error])
+        elif custom:
             self.model = self.build_rnn(nn_type)
         else:
             if nn_type == 'lstm':
@@ -44,8 +49,8 @@ class Rnn:
         model = Sequential()
         if nn_type == 'lstm':
             model.add(Bidirectional(LSTM(self.nb_features,
-                                         input_shape=(self.timesteps, self.nb_features))))
-                                         #recurrent_regularizer='l1')))
+                                         input_shape=(self.timesteps, self.nb_features),
+                                         recurrent_regularizer='l1')))
         else:
             if nn_type == 'gru':
                 model.add(Bidirectional(GRU(self.nb_features, input_shape=(self.timesteps, self.nb_features))))

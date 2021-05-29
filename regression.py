@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-#import shap
+import shap
 from sklearn import linear_model
 from sklearn.ensemble import GradientBoostingRegressor, VotingRegressor, AdaBoostRegressor, ExtraTreesRegressor, RandomForestRegressor
 from sklearn.model_selection import KFold, cross_val_score
@@ -21,7 +21,7 @@ from neural_networks.rnn import Rnn
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.options.display.float_format = '{:,.2f}'.format
-
+tf.compat.v1.disable_v2_behavior()
 
 class TimeSeriesRegressor:
 
@@ -125,7 +125,14 @@ class TimeSeriesRegressor:
 
     def lasso_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
         X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
-        clf = linear_model.Lasso(alpha=0.1)
+        clf = linear_model.Lasso(alpha=0.0001)
+        cv = KFold(n_splits=10)
+        n_scores = cross_val_score(clf, X, Y, cv=cv, n_jobs=-1)
+        print('Accuracy: ' + str(np.mean(n_scores)))
+
+    def linear_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
+        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
+        clf = linear_model.LinearRegression()
         cv = KFold(n_splits=10)
         n_scores = cross_val_score(clf, X, Y, cv=cv, n_jobs=-1)
         print('Accuracy: ' + str(np.mean(n_scores)))
@@ -171,14 +178,14 @@ class TimeSeriesRegressor:
 
         rnn.evaluate_model()
 
-    # explainer = shap.DeepExplainer(lstm.model, trainX)
-    # shap_values = explainer.shap_values(testX)
-    #
-    # shap.initjs()
-    #
-    # # plot the explanation of the first prediction
-    # # Note the model is "multi-output" because it is rank-2 but only has one column
-    # shap.force_plot(explainer.expected_value[0], shap_values[0][0])
+        explainer = shap.DeepExplainer(rnn.model, rnn.trainX)
+        shap_values = explainer.shap_values(rnn.testX)
+
+        shap.initjs()
+
+        # plot the explanation of the first prediction
+        # the model is "multi-output" because it is rank-2 but only has one column
+        shap.force_plot(explainer.expected_value[0], shap_values[0][0], link='logit', matplotlib=True)
 
 
     def lstm_ensemble_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
@@ -198,6 +205,25 @@ class TimeSeriesRegressor:
         n_scores = cross_val_score(lstm_ensemble, X, Y, cv=cv, n_jobs=-1)
         print('R^2: ' + str(np.mean(n_scores)))
 
+    def rnn_ensemble_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
+        members = []
+        dependencies = {
+            'root_mean_squared_error': Rnn.root_mean_squared_error
+        }
+        lstm = tf.keras.models.load_model("models/lstm-best-custom.h5", custom_objects=dependencies)
+        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
+        trainX, trainY, validX, validY, testX, testY = self.train_test_val_split(X, Y)
+        lstm = Rnn(trainX, trainY, validX, validY, testX, testY, model=lstm)
+        lstm.evaluate_model()
+        # update all layers in all models to not be trainable
+        # for i in range(len(members)):
+        #     model = members[i]
+        #     for layer in model.layers:
+        #         # make not trainable
+        #         layer.trainable = False
+        #         # rename to avoid 'unique layer name' issue
+        #         layer._name = 'ensemble_' + str(i + 1) + '_' + layer.name
+
 
 if __name__ == '__main__':
     #DatasetBuilder.write_all_data_to_csv("idk.csv", datatype='numerical', include_timestamps=True)
@@ -209,17 +235,18 @@ if __name__ == '__main__':
 
     reg = TimeSeriesRegressor(data)
 
-    #feature_selector = FeatureSelector(data, reg.gen)
+    feature_selector = FeatureSelector(data, reg.gen)
     #feature_vector = feature_selector.lasso_feature_selector(include_timestamps)
     #feature_vector = feature_selector.rfe(datatype, include_timestamps)
-    #feature_vector = [1, 2, 10, 14, 15, 16, 18, 20, 22, 23, 24, 43, 47, 57, 99, 101, 123, 149, 172, 174, 177, 199, 227, 234, 244, 257, 275, 279]
+    #feature_vector = [0, 1, 2, 10, 14, 15, 16, 18, 20, 22, 23, 24, 43, 47, 57, 99, 101, 123, 149, 172, 174, 177, 199, 227, 234, 244, 257, 275, 279]
     #feature_vector = [11, 12, 14, 18, 20, 22, 23]
     # for numerical 2 previous 57.64
     #simple GRU 75.38; rmspe: 1.47
     #my lstm 73.7
     # gru resampled 73.94
-    #to try: predict also the future timestamp!
     #reg.rnn_regression(include_timestamps, 2, [0, 1], 'lstm', custom=True)
-    for i in range(1, 4):
-        #reg.gradient_boosted_regression(include_timestamps, i, feature_vector)
-        reg.rnn_regression(include_timestamps, i, 'exclude VA', 'gru', custom=True)
+    #for i in range(1, 4):
+        #reg.gradient_boosted_regression(include_timestamps, i, 'exclude VA')
+    reg.rnn_regression(include_timestamps, previous_visits=2,
+                        features='exclude VA',
+                        nn_type='lstm', custom=True)

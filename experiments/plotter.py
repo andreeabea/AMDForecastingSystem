@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_bar_chart(means1, means2):
+def plot_bar_chart(means1, means2, features_str):
     n = np.arange(len(means1))
     width = 0.35
 
@@ -11,7 +11,7 @@ def plot_bar_chart(means1, means2):
             label='time intervals (in number of months) as inputs')
 
     plt.ylabel('Mean R^2 scores')
-    plt.title('Visual acuity prediction from past visual acuity data')
+    plt.title('Visual acuity prediction from ' + features_str)
 
     plt.yticks(np.arange(0, 1.3, 0.1))
     plt.xticks(n + width / 2, ('size=2', 'size=3', 'size=4'))
@@ -28,6 +28,19 @@ def plot_bar_chart(means1, means2):
     plt.show()
 
 
-means1 = [0.9, 0.938, 0.935]
-means2 = [0.818, 0.81, 0.695]
-plot_bar_chart(means1, means2)
+def get_vals(exp):
+    if exp == 1:
+        #experiment 1
+        means1 = [0.91, 0.941, 0.939]
+        means2 = [0.825, 0.82, 0.72]
+        features_str = 'past visual acuity data'
+    elif exp==2:
+        #experiment 2
+        means1 = [0.58, 0.75, 0.65]
+        means2 = [0.50, 0.73, 0.51]
+        features_str = 'all numerical OCT features'
+    return means1, means2, features_str
+
+
+means1, means2, features_str = get_vals(2)
+plot_bar_chart(means1, means2, features_str)
