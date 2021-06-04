@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-import shap
 from sklearn import linear_model
 from sklearn.ensemble import GradientBoostingRegressor, VotingRegressor, AdaBoostRegressor, ExtraTreesRegressor, RandomForestRegressor
-from sklearn.model_selection import KFold, cross_val_score
+from sklearn.metrics import r2_score
+from sklearn.model_selection import KFold, cross_val_score, train_test_split
 from sklearn.svm import SVR
 
 from tslearn.svm import TimeSeriesSVR
@@ -16,12 +16,16 @@ import matplotlib.pyplot as plt
 from data_handling.db_handler import DbHandler
 from data_handling.feature_selection import FeatureSelector
 from data_handling.timeseries_augmentation import TimeSeriesGenerator
+from neural_networks.cnn import Cnn
 from neural_networks.rnn import Rnn
+
+from tensorflow.keras.layers import Dense, concatenate, Dropout
+from tensorflow.keras.models import Model
 
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.options.display.float_format = '{:,.2f}'.format
-tf.compat.v1.disable_v2_behavior()
+
 
 class TimeSeriesRegressor:
 
@@ -67,7 +71,8 @@ class TimeSeriesRegressor:
         trainX, trainY, testX, testY = self.split_data()
         print(svr.fit(trainX, trainY).score(testX, testY))
 
-    def train_test_val_split(self, dataX, dataY):
+    @staticmethod
+    def train_test_val_split(dataX, dataY):
         # compute the training split
         i = int(len(dataX) * config.TRAIN_SPLIT)
         trainX = dataX[:i]
@@ -128,20 +133,20 @@ class TimeSeriesRegressor:
         clf = linear_model.Lasso(alpha=0.0001)
         cv = KFold(n_splits=10)
         n_scores = cross_val_score(clf, X, Y, cv=cv, n_jobs=-1)
-        print('Accuracy: ' + str(np.mean(n_scores)))
+        print('R^2: ' + str(np.mean(n_scores)))
 
     def linear_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
         X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
         clf = linear_model.LinearRegression()
         cv = KFold(n_splits=10)
         n_scores = cross_val_score(clf, X, Y, cv=cv, n_jobs=-1)
-        print('Accuracy: ' + str(np.mean(n_scores)))
+        print('R^2: ' + str(np.mean(n_scores)))
 
-    def voting_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
+    def voting_regression_v1(self, previous_visits=1, features='exclude VA'):
         gbr = GradientBoostingRegressor()
 
-        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
-        X = X.reshape(-1, previous_visits, X.shape[1])
+        X, Y = self.gen.generate_timeseries(size=previous_visits, features=features)
+        X = X.reshape(-1, previous_visits, X.shape[1]//previous_visits)
 
         def build_lstm():
             lstm = Rnn(None, None, None, None, None, None, timesteps=previous_visits, nb_features=X.shape[2])
@@ -168,6 +173,41 @@ class TimeSeriesRegressor:
         plt.title('Feature Importance')
         plt.show()
 
+    def rnn_regression_cv(self, include_timestamp=False, previous_visits=1, features='exclude VA',
+                   nn_type='lstm', custom=True):
+        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
+
+        nb_folds = 10
+        rand = 42
+        kfold = KFold(n_splits=nb_folds, shuffle=True, random_state=rand)
+        r2_score = 0
+        mae_score = 0
+        mse_score = 0
+        rmse_score = 0
+        rmspe_score = 0
+        max_r2 = 0
+
+        for train, test in kfold.split(X, Y):
+            trainX, validX, trainY, validY = train_test_split(X[train], Y[train], test_size = 0.3, random_state = rand)
+            rnn = Rnn(trainX, trainY, validX, validY, X[test], Y[test], nn_type=nn_type, custom=custom)
+            rnn.train()
+
+            mae, mse, rmse, r2, rmspe = rnn.evaluate_model()
+            r2_score += r2
+            mse_score += mse
+            mae_score += mae
+            rmse_score += rmse
+            rmspe_score += rmspe
+            #input()
+            if r2 > max_r2:
+                max_r2 = r2
+
+        print('Avg cross-validated MSE score: ' + str(float(mse_score / nb_folds)))
+        print('Avg cross-validated MAE score: ' + str(float(mae_score / nb_folds)))
+        print('Avg cross-validated RMSE score: ' + str(float(rmse_score / nb_folds)))
+        print('Avg cross-validated R^2 score: ' + str(float(r2_score/nb_folds)))
+        print('Best R^2 score: ' + str(max_r2))
+
     def rnn_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA',
                    nn_type='lstm', custom=True):
         X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
@@ -177,16 +217,6 @@ class TimeSeriesRegressor:
         rnn.train()
 
         rnn.evaluate_model()
-
-        explainer = shap.DeepExplainer(rnn.model, rnn.trainX)
-        shap_values = explainer.shap_values(rnn.testX)
-
-        shap.initjs()
-
-        # plot the explanation of the first prediction
-        # the model is "multi-output" because it is rank-2 but only has one column
-        shap.force_plot(explainer.expected_value[0], shap_values[0][0], link='logit', matplotlib=True)
-
 
     def lstm_ensemble_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
         X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
@@ -206,40 +236,122 @@ class TimeSeriesRegressor:
         print('R^2: ' + str(np.mean(n_scores)))
 
     def rnn_ensemble_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
+        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
+        trainX, trainY, validX, validY, testX, testY = self.train_test_val_split(X, Y)
+
         members = []
         dependencies = {
             'root_mean_squared_error': Rnn.root_mean_squared_error
         }
-        lstm = tf.keras.models.load_model("models/lstm-best-custom.h5", custom_objects=dependencies)
-        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
-        trainX, trainY, validX, validY, testX, testY = self.train_test_val_split(X, Y)
-        lstm = Rnn(trainX, trainY, validX, validY, testX, testY, model=lstm)
-        lstm.evaluate_model()
+
+        lstm = tf.keras.models.load_model("models/lstm-best-custom-all-resampled.h5", custom_objects=dependencies)
+        members.append(lstm)
+        #lstm = Rnn(trainX, trainY, validX, validY, testX, testY, model=lstm)
+        #lstm.evaluate_model()
+
+        cnn = tf.keras.models.load_model("models/convlstm-all-0.89.h5", custom_objects=dependencies)
+        members.append(cnn)
+
+        gru = tf.keras.models.load_model("models/gru2-numerical-woVA2.h5", custom_objects=dependencies)
+        #members.append(gru)
+        #gru = Rnn(trainX, trainY, validX, validY, testX, testY, model=gru)
+        #gru.evaluate_model()
+
         # update all layers in all models to not be trainable
-        # for i in range(len(members)):
-        #     model = members[i]
-        #     for layer in model.layers:
-        #         # make not trainable
-        #         layer.trainable = False
-        #         # rename to avoid 'unique layer name' issue
-        #         layer._name = 'ensemble_' + str(i + 1) + '_' + layer.name
+        for i in range(len(members)):
+            model = members[i]
+            #model.get_layer(name='bidirectional_input').name = 'ensemble_' + str(i + 1) + '_' + 'bidirectional_input'
+            #model.inputs._name = 'ensemble_' + str(i + 1) + '_' + model.inputs.name
+            #model.input.type_spec._name = 'ensemble_' + str(i + 1) + '_' + model.input.type_spec.name
+            for layer in model.layers:
+                # make not trainable
+                layer.trainable = False
+                # rename to avoid 'unique layer name' issue
+                layer._name = 'ensemble_' + str(i + 1) + '_' + layer.name
+
+        # define multi-headed input
+        ensemble_visible = [model.input for model in members]
+        # concatenate merge output from each model
+        ensemble_outputs = [model.output for model in members]
+        merge = concatenate(ensemble_outputs)
+        output = Dense(1, activation='sigmoid')(merge)
+        ensemble = Model(inputs=ensemble_visible, outputs=output)
+
+        ensemble_rnn = Rnn(trainX, trainY, validX, validY, testX, testY, model=ensemble)
+
+        new_trainX = [ensemble_rnn.trainX for _ in range(len(ensemble.input))]
+        new_validX = [ensemble_rnn.validX for _ in range(len(ensemble.input))]
+        new_testX = [ensemble_rnn.testX for _ in range(len(ensemble.input))]
+
+        ensemble_rnn.trainX = new_trainX
+        ensemble_rnn.validX = new_validX
+        ensemble_rnn.testX = new_testX
+        ensemble_rnn.train()
+        ensemble_rnn.evaluate_model()
+
+    def voting_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
+        X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
+        _, _, _, _, testX, testY = self.train_test_val_split(X, Y)
+        testX = testX.reshape(-1, 1, testX.shape[1])
+
+        members = []
+        dependencies = {
+            'root_mean_squared_error': Rnn.root_mean_squared_error
+        }
+
+        lstm = tf.keras.models.load_model("models/lstm-best-custom-all-resampled.h5", custom_objects=dependencies)
+        members.append(lstm)
+        lstm.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
+                                                                                 'mean_squared_error',
+                                                                                 Rnn.root_mean_squared_error])
+        lstm.evaluate(testX, testY)
+
+        cnn = tf.keras.models.load_model("models/convlstm-all-0.89.h5", custom_objects=dependencies)
+        members.append(cnn)
+        cnn.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
+                                                                                 'mean_squared_error',
+                                                                                 Rnn.root_mean_squared_error])
+        cnn.evaluate(testX, testY)
+
+        #gru = tf.keras.models.load_model("models/gru2-numerical-woVA2.h5", custom_objects=dependencies)
+        #members.append(gru)
+        #gru.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
+        #                                                                         'mean_squared_error',
+        #                                                                         Rnn.root_mean_squared_error])
+        #gru.evaluate(testX, testY)
+
+        lstm_prediction = lstm.predict(testX, batch_size=1)
+        cnn_prediction = cnn.predict(testX, batch_size=1)
+        #gru_prediction = gru.predict(testX, batch_size=1)
+
+        predictions = np.array([lstm_prediction, cnn_prediction])#, gru_prediction])
+        avg_prediction = np.mean(predictions, axis=0)
+
+        testY = testY.reshape(testY.shape[0], 1)
+        print("RMSPE: ")
+        result = Rnn.rmspe(testY, avg_prediction)
+        print(result)
+        print("Compute R^2 ...")
+        result = r2_score(testY, avg_prediction)
+        print(result)
 
 
 if __name__ == '__main__':
     #DatasetBuilder.write_all_data_to_csv("idk.csv", datatype='numerical', include_timestamps=True)
-    datatype = 'numerical'
-    include_timestamps = True
+    datatype = 'all'
+    include_timestamps = False
 
     db_handler = DbHandler(datatype, include_timestamps)
     data = db_handler.get_data_from_csv()
 
     reg = TimeSeriesRegressor(data)
 
-    feature_selector = FeatureSelector(data, reg.gen)
+    #feature_selector = FeatureSelector(data, reg.gen)
     #feature_vector = feature_selector.lasso_feature_selector(include_timestamps)
     #feature_vector = feature_selector.rfe(datatype, include_timestamps)
-    #feature_vector = [0, 1, 2, 10, 14, 15, 16, 18, 20, 22, 23, 24, 43, 47, 57, 99, 101, 123, 149, 172, 174, 177, 199, 227, 234, 244, 257, 275, 279]
+    #feature_vector = [1, 2, 10, 14, 15, 16, 18, 20, 22, 23, 24, 43, 47, 57, 99, 101, 123, 149, 172, 174, 177, 199, 227, 234, 244, 257, 275, 279]
     #feature_vector = [11, 12, 14, 18, 20, 22, 23]
+    #feature_vector=[5, 11, 12, 15, 16, 17, 20, 22, 23, 24, 83, 101, 120, 138, 168, 171, 172, 179, 180, 190, 199, 212, 227, 230, 244, 252, 257, 270]
     # for numerical 2 previous 57.64
     #simple GRU 75.38; rmspe: 1.47
     #my lstm 73.7
@@ -247,6 +359,9 @@ if __name__ == '__main__':
     #reg.rnn_regression(include_timestamps, 2, [0, 1], 'lstm', custom=True)
     #for i in range(1, 4):
         #reg.gradient_boosted_regression(include_timestamps, i, 'exclude VA')
-    reg.rnn_regression(include_timestamps, previous_visits=2,
+    #feature_vector = [1, 20, 22, 24, 37, 56, 76, 117, 190, 211, 244]
+    #feature_vector = [1, 20, 21, 22,24, 76, 117, 244, 275]
+    reg.rnn_regression_cv(include_timestamps, previous_visits=3,
                         features='exclude VA',
                         nn_type='lstm', custom=True)
+    #reg.rnn_ensemble_regression(include_timestamps, previous_visits=2, features=feature_vector)

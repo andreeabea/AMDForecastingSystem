@@ -73,7 +73,7 @@ class FeatureSelector:
     def lasso_feature_selector(self, include_timestamp=False, features='exclude VA'):
         X, Y = self.gen.generate_timeseries(include_timestamp, 1, features)
 
-        lasso = LassoCV(normalize=True)
+        lasso = LassoCV(normalize=True, tol=1e-2)
         lasso.fit(X, Y)
         print("Best alpha using built-in LassoCV: %f" % lasso.alpha_)
         print("Best score using built-in LassoCV: %f" % lasso.score(X, Y))

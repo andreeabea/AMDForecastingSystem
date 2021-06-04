@@ -2,7 +2,7 @@ import tensorflow as tf
 from sklearn.metrics import r2_score
 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, SimpleRNN, ReLU, Dropout, Attention, Activation, Input, Bidirectional, GRU
+from tensorflow.keras.layers import LSTM, Dense, SimpleRNN, ReLU, Dropout, Attention, Activation, Input, Bidirectional, GRU, Conv1D, Flatten, MaxPooling1D, AveragePooling1D, GlobalAveragePooling1D
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import Model
 
@@ -23,7 +23,8 @@ class Rnn:
             self.validY = validY
             self.testX = testX
             self.testY = testY
-            self.nb_features = trainX.shape[1]
+
+            self.nb_features = trainX.shape[1] // timesteps
 
             self.trainX = self.trainX.reshape(-1, timesteps, self.nb_features)
             self.validX = self.validX.reshape(-1, timesteps, self.nb_features)
@@ -47,16 +48,19 @@ class Rnn:
 
     def build_rnn(self, nn_type):
         model = Sequential()
+        #model.add(Conv1D(filters=64, kernel_size=self.timesteps,
+        #                 input_shape=(self.timesteps, self.nb_features)))
+        #model.add(AveragePooling1D(pool_size=1))
         if nn_type == 'lstm':
             model.add(Bidirectional(LSTM(self.nb_features,
-                                         input_shape=(self.timesteps, self.nb_features),
-                                         recurrent_regularizer='l1')))
+                                         input_shape=(self.timesteps, self.nb_features))))
+                                         #,recurrent_regularizer='l1')))
         else:
             if nn_type == 'gru':
                 model.add(Bidirectional(GRU(self.nb_features, input_shape=(self.timesteps, self.nb_features))))
             else:
                 model.add(Bidirectional(SimpleRNN(self.nb_features, input_shape=(self.timesteps, self.nb_features))))
-
+        #model.add(Bidirectional(LSTM(units=128)))
         model.add(ReLU())
         model.add(Dropout(0.1))
         model.add(Dense(1, activation="sigmoid"))# activity_regularizer=tf.keras.regularizers.l1_l2(l1=0.01, l2=0.01)))
@@ -127,7 +131,7 @@ class Rnn:
 
         my_callbacks = [
             tf.keras.callbacks.ModelCheckpoint(filepath='../models/rnn.h5'),
-            tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True)
+            tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
         ]
 
         self.model.fit(self.trainX, self.trainY, epochs=500, batch_size=8, verbose=2,
@@ -154,11 +158,13 @@ class Rnn:
         print("testX : ", self.testX)
         print("testY: ", self.testY)
         self.testY = self.testY.reshape(self.testY.shape[0],1)
-        print(self.testY.shape)
-        print(prediction.shape)
+        #print(self.testY.shape)
+        #print(prediction.shape)
         print("RMSPE: ")
-        result = self.rmspe(self.testY, prediction)
-        print(result)
+        rmspe = self.rmspe(self.testY, prediction)
+        print(rmspe)
         print("Compute R^2 ...")
-        result = r2_score(self.testY, prediction)
-        print(result)
+        r2 = r2_score(self.testY, prediction)
+        print(r2)
+        # return MAE, MSE, RMSE, R^2, RMSPE
+        return results[1], results[2], results[3], r2, rmspe

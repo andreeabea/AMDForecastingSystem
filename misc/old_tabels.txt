@@ -1,0 +1,106 @@
+\begin{table}[H]
+\caption{Results when forecasting from all numerical OCT features, from time-series of size=2.}
+\centering                          % tabel centrat 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}          % 4 coloane centrate 
+\hline\hline                        % linie orizontala dubla
+
+Algorithm & \multicolumn{5}{|c|}{Monthly resampled time-series} & \multicolumn{5}{|c|}{Timesteps as input features} \\ 
+
+\cline{2-11}
+& MSE & MAE & RMSE & $R^2$ & RMSPE & MSE & MAE & RMSE & $R^2$ & RMSPE \\[0.5ex]   % inserare tabel
+%heading
+\hline                              % linie orizontal simpla
+Simple RNN network & \textbf{0.03} & \textbf{0.13} & \textbf{0.22} & \textbf{0.64} & \textbf{0.03} & 0.05 & \textbf{0.16} & \textbf{0.21} & \textbf{0.50} & \textbf{0.04} \\
+LSTM network & 0.05 & 0.17 & 0.26 & 0.50 & \textbf{0.03} & \textbf{0.04} & \textbf{0.16} & \textbf{0.21} & 0.49 & \textbf{0.04} \\
+GRU network & 0.04 & 0.15 & 0.23 & 0.59 & \textbf{0.03} & 0.05 & 0.17 & 0.22 & \textbf{0.50} & 0.05  \\[1ex]           % [1ex] adds vertical space
+\hline                              
+\end{tabular}}
+  % titlul tabelului
+\label{table:va-pred1}                % \label{table:nonlin} introduce eticheta folosita pentru referirea tabelului in text; referirea in text se va face cu \ref{table:nonlin}
+\end{table}
+
+\begin{table}[H]
+\caption{Results when forecasting from all numerical OCT features, from time-series of size=3.}
+\centering                          % tabel centrat 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}          % 4 coloane centrate 
+\hline\hline                        % linie orizontala dubla
+
+Algorithm & \multicolumn{5}{|c|}{Monthly resampled time-series} & \multicolumn{5}{|c|}{Timesteps as input features} \\ 
+
+\cline{2-11}
+& MSE & MAE & RMSE & $R^2$ & RMSPE & MSE & MAE & RMSE & $R^2$ & RMSPE \\[0.5ex]   % inserare tabel
+%heading
+\hline                              % linie orizontal simpla
+Simple RNN network & 0.03 & \textbf{0.11} & \textbf{0.15} & 0.75 & 0.02 & \textbf{0.02} & 0.10 & 0.18 & 0.72 & 0.03 \\
+LSTM network & \textbf{0.02} & \textbf{0.11} & \textbf{0.15} & \textbf{0.76} & \textbf{0.01} & \textbf{0.02} & \textbf{0.09} & \textbf{0.13} & 0.73 & 0.02 \\
+GRU network & 0.03 & 0.12 & 0.16 & 0.73 & \textbf{0.01} & \textbf{0.02} & \textbf{0.09} & \textbf{0.13} & \textbf{0.74} & \textbf{0.01} \\[1ex]           % [1ex] adds vertical space
+\hline                              
+\end{tabular}}
+  % titlul tabelului
+\label{table:va-pred2}                % \label{table:nonlin} introduce eticheta folosita pentru referirea tabelului in text; referirea in text se va face cu \ref{table:nonlin}
+\end{table}
+
+\begin{table}[H]
+\caption{Results when forecasting from all numerical OCT features, from time-series of size=4.}
+\centering                          % tabel centrat 
+\resizebox{\textwidth}{!}{
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}          % 4 coloane centrate 
+\hline\hline                        % linie orizontala dubla
+
+Algorithm & \multicolumn{5}{|c|}{Monthly resampled time-series} & \multicolumn{5}{|c|}{Timesteps as input features} \\ 
+
+\cline{2-11}
+& MSE & MAE & RMSE & $R^2$ & RMSPE & MSE & MAE & RMSE & $R^2$ & RMSPE \\[0.5ex]   % inserare tabel
+%heading
+\hline                              % linie orizontal simpla
+Simple RNN network & \textbf{0.03} & 0.13 & \textbf{0.18} & 0.65 & \textbf{0.01} & \textbf{0.03} & \textbf{0.14} & 0.19 & 0.46 & 0.07 \\
+LSTM network & \textbf{0.03} & 0.13 & 0.19 & 0.64 & \textbf{0.01} & \textbf{0.03} & \textbf{0.14} & \textbf{0.17} & \textbf{0.54} & \textbf{0.06} \\
+GRU network & \textbf{0.03} & \textbf{0.12} & \textbf{0.18} & \textbf{0.67} & \textbf{0.01} & \textbf{0.03} & \textbf{0.14} & \textbf{0.17} & \textbf{0.54} & \textbf{0.06} \\[1ex]           % [1ex] adds vertical space
+\hline                              
+\end{tabular}}
+  % titlul tabelului
+\label{table:va-pred3}                % \label{table:nonlin} introduce eticheta folosita pentru referirea tabelului in text; referirea in text se va face cu \ref{table:nonlin}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+\includegraphics[width=12cm]{templateLaTeX-Eng/img/va-pred-2.png}
+    \caption{Average $R^2$ scores when predicting future visual acuities from all numerical OCT data.}
+    \label{fig:va-pred-2}
+\end{figure}
+
+\subsubsection{Including the OCT image embeddings}
+
+The following results show that using the OCT fundus image embeddings as inputs (256 new features), in addition to the numerical OCT features, may improve the forecasting results in some cases. Based on the previous analysis, given that the greatest prediction accuracy was accomplished for time-series of length 3, we have tried to improve these scenario. Furthermore, because of the large number of features in this case, the best performing features were selected using the feature selection techniques aforementioned in the previous chapters. 
+
+Table \ref{table:va-pred4} shows that additionally using features from the OCT images may improve the performance in some cases, but not necessarily in the case of resampled time-series. This occurs because interpolation might not be the best method to replace the missing features from the images. Moreover, the feature selection technique plays an important role when having such a great number of features, Recursive Feature Elimination (RFE) with Gradient Boosting Machine and k-fold cross validation (10 folds) showing the best results when using the timesteps of the visits as inputs. The performance of the LSTM network using RFE in this case, achieves up to $10\%$ more in the $R^2$ score, compared with the predictions made without using features from the OCT fundus scans. Oppositely, for resampled time-series, LASSO feature selection performs the best, but using the OCT images along with the numerical features do not bring much improvements.
+
+\begin{table}[ht]
+\caption{Forecasting results when using both numerical OCT features and fundus image embeddings, for time series of size 3.}
+\centering                          % tabel centrat 
+\resizebox{\textwidth}{!}{\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|}          % 4 coloane centrate 
+\hline\hline                        % linie orizontala dubla
+Feature sel. & Algorithm & \multicolumn{5}{|c|}{Resampled time-series} & \multicolumn{5}{|c|}{Timestamp as a feature} \\ 
+
+\cline{3-12}
+method & & MSE & MAE & RMSE & R$^2$ & RMSPE & MSE & MAE & RMSE & R$^2$ & RMSPE \\ [0.5ex]   % inserare tabel
+%heading
+\hline                              % linie orizontal simpla
+& RNN & 0.04 & 0.15 & 0.21 & 0.58 & 0.02 & 0.02 & 0.09 & 0.14 & 0.68 & 0.02 \\
+None & LSTM & 0.04 & 0.15 & 0.20 & 0.61 & 0.02 & 0.02 & 0.09 & 0.14 & 0.67 & 0.02 \\
+& GRU & 0.04 & 0.16 & 0.22 & 0.54 & 0.02 & 0.02 & 0.10 & 0.14 & 0.69 & 0.02 \\
+\hline
+& RNN & 0.04 & 0.13 & 0.18 & 0.66 & 0.02 & 0.01 & 0.08 & 0.11 & 0.80 & 0.02 \\
+RFE & LSTM & 0.03 & 0.12 & 0.18 & 0.68 & 0.02 & \textbf{0.01} & \textbf{0.07} & \textbf{0.11} & \textbf{0.83} & \textbf{0.01} \\
+& GRU & 0.04 & 0.14 & 0.19 & 0.64 & 0.02 & 0.01 & 0.08 & 0.11 & 0.82 & 0.02 \\
+\hline
+& RNN & 0.03 & 0.13 & 0.17 & 0.70 & 0.02 & 0.02 & 0.13 & 0.15 & 0.64 & 0.07 \\
+LASSO & LSTM & 0.03 & 0.13 & 0.18 & 0.69 & 0.01 & 0.02 & 0.13 & 0.14 & 0.70 & 0.05\\
+& GRU & \textbf{0.03} & \textbf{0.13} & \textbf{0.17} & \textbf{0.71} & \textbf{0.01} & 0.02 & 0.14 & 0.16 & 0.61 & 0.08\\ [1ex]           % [1ex] adds vertical space
+\hline                              
+\end{tabular}}
+  % titlul tabelului
+\label{table:va-pred4}                % \label{table:nonlin} introduce eticheta folosita pentru referirea tabelului in text; referirea in text se va face cu \ref{table:nonlin}
+\end{table}

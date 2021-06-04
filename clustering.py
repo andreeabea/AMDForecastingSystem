@@ -101,8 +101,8 @@ class TimeSeriesClustering:
 
 
 if __name__ == '__main__':
-    datatype = 'images'
-    include_timestamps = False
+    datatype = 'all'
+    include_timestamps = True
 
     db_handler = DbHandler(datatype, include_timestamps)
     data = db_handler.get_data_from_csv()
