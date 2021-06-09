@@ -198,7 +198,7 @@ class TimeSeriesRegressor:
             mae_score += mae
             rmse_score += rmse
             rmspe_score += rmspe
-            #input()
+            input()
             if r2 > max_r2:
                 max_r2 = r2
 
@@ -361,7 +361,7 @@ if __name__ == '__main__':
         #reg.gradient_boosted_regression(include_timestamps, i, 'exclude VA')
     #feature_vector = [1, 20, 22, 24, 37, 56, 76, 117, 190, 211, 244]
     #feature_vector = [1, 20, 21, 22,24, 76, 117, 244, 275]
-    reg.rnn_regression_cv(include_timestamps, previous_visits=3,
-                        features='exclude VA',
+    reg.rnn_regression_cv(include_timestamps, previous_visits=2,
+                        features='all',
                         nn_type='lstm', custom=True)
     #reg.rnn_ensemble_regression(include_timestamps, previous_visits=2, features=feature_vector)
