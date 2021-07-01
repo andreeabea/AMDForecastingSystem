@@ -54,7 +54,10 @@ class LatentCodeHandler:
     def get_test_images(self):
         testX = []
         # TODO: open file dialog to choose image
-        image = Image.open("../data/Pacient 3/Vizita 2 - 05.12.2019/OD/60542CD0.tif").convert("L")
+        image = Image.open("../data/Pacient 3/Vizita 2 - 05.12.2019/OD/602BBD40.tif").convert("L")
+        #image = Image.open("../data/Pacient 1/Vizita 4 - 23.05.2018/OD/1764F070.tif").convert("L")
+        #image = Image.open("../data/Pacient 25/Vizita 3 - 21.10.2019/OS/EEAD9E70.tif").convert("L")
+        #image = Image.open("../data/Pacient 93/Vizita 3 - 27.03.2019/OD/36ADEF30.tif").convert("L")
 
         # resize img
         image = np.array(image.resize((self.image_width, self.image_height), Image.ANTIALIAS))
@@ -82,7 +85,8 @@ class LatentCodeHandler:
     def get_gradcam_heatmap(self, images):
         # First, we create a model that maps the input image to the activations
         # of the last conv layer
-        last_conv_layer = self.model.get_layer("conv2d_7")
+        #5,7,8
+        last_conv_layer = self.model.get_layer("conv2d_5")
         last_conv_layer_model = Model(self.model.inputs, last_conv_layer.output)
 
         # Second, we create a model that maps the activations of the last conv
@@ -153,3 +157,10 @@ class LatentCodeHandler:
 
         # Display Grad CAM
         superimposed_img.show("gradcam heatmap")
+
+
+if __name__ == '__main__':
+    code_handler = LatentCodeHandler("../models/autoencoder256-original-sgm.h5")
+    imgs = code_handler.get_test_images()
+    #code_handler.reconstruct_images(imgs)
+    code_handler.get_gradcam_heatmap(imgs)

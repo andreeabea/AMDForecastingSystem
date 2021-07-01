@@ -132,5 +132,5 @@ if __name__ == '__main__':
     ts_classifier = TimeSeriesClassifier(data)
     ts_classifier.gradient_boosted_classifier(include_timestamps, 1, 'exclude VA')
 
-    #ts_classifier.knn_classifier(2)
+    ts_classifier.knn_classifier(2)
     #ts_classifier.cnn_classifier(include_timestamps, 3, 'all')

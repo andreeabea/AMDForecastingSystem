@@ -244,14 +244,15 @@ class TimeSeriesRegressor:
             'root_mean_squared_error': Rnn.root_mean_squared_error
         }
 
-        lstm = tf.keras.models.load_model("models/lstm-best-custom-all-resampled.h5", custom_objects=dependencies)
+        lstm = tf.keras.models.load_model("best_models/lstm-num-img-res-0.95.h5", custom_objects=dependencies)
         members.append(lstm)
+        #lstm.summary()
         #lstm = Rnn(trainX, trainY, validX, validY, testX, testY, model=lstm)
         #lstm.evaluate_model()
 
-        cnn = tf.keras.models.load_model("models/convlstm-all-0.89.h5", custom_objects=dependencies)
+        cnn = tf.keras.models.load_model("best_models/rnn-num-img-res-0.95.h5", custom_objects=dependencies)
         members.append(cnn)
-
+        #cnn.summary()
         gru = tf.keras.models.load_model("models/gru2-numerical-woVA2.h5", custom_objects=dependencies)
         #members.append(gru)
         #gru = Rnn(trainX, trainY, validX, validY, testX, testY, model=gru)
@@ -291,27 +292,35 @@ class TimeSeriesRegressor:
 
     def voting_regression(self, include_timestamp=False, previous_visits=1, features='exclude VA'):
         X, Y = self.gen.generate_timeseries(include_timestamp, previous_visits, features)
-        _, _, _, _, testX, testY = self.train_test_val_split(X, Y)
-        testX = testX.reshape(-1, 1, testX.shape[1])
+        nb_folds = 10
+        rand = 42
+        kfold = KFold(n_splits=nb_folds, shuffle=True, random_state=rand)
+        r2_score_cv = 0
+        max_r2 = 0
 
-        members = []
-        dependencies = {
-            'root_mean_squared_error': Rnn.root_mean_squared_error
-        }
+        for train, test in kfold.split(X, Y):
+            #_, _, _, _, testX, testY = self.train_test_val_split(X, Y)
+            testX, testY = X[test], Y[test]
+            testX = testX.reshape(-1, 1, testX.shape[1])
 
-        lstm = tf.keras.models.load_model("models/lstm-best-custom-all-resampled.h5", custom_objects=dependencies)
-        members.append(lstm)
-        lstm.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
-                                                                                 'mean_squared_error',
-                                                                                 Rnn.root_mean_squared_error])
-        lstm.evaluate(testX, testY)
+            members = []
+            dependencies = {
+                'root_mean_squared_error': Rnn.root_mean_squared_error
+            }
 
-        cnn = tf.keras.models.load_model("models/convlstm-all-0.89.h5", custom_objects=dependencies)
-        members.append(cnn)
-        cnn.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
-                                                                                 'mean_squared_error',
-                                                                                 Rnn.root_mean_squared_error])
-        cnn.evaluate(testX, testY)
+            lstm = tf.keras.models.load_model("best_models/lstm-num-img-res-0.95.h5", custom_objects=dependencies)
+            members.append(lstm)
+            lstm.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
+                                                                                     'mean_squared_error',
+                                                                                     Rnn.root_mean_squared_error])
+            lstm.evaluate(testX, testY)
+
+            cnn = tf.keras.models.load_model("best_models/rnn-num-img-res-0.95.h5", custom_objects=dependencies)
+            members.append(cnn)
+            cnn.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
+                                                                                     'mean_squared_error',
+                                                                                     Rnn.root_mean_squared_error])
+            cnn.evaluate(testX, testY)
 
         #gru = tf.keras.models.load_model("models/gru2-numerical-woVA2.h5", custom_objects=dependencies)
         #members.append(gru)
@@ -320,25 +329,38 @@ class TimeSeriesRegressor:
         #                                                                         Rnn.root_mean_squared_error])
         #gru.evaluate(testX, testY)
 
-        lstm_prediction = lstm.predict(testX, batch_size=1)
-        cnn_prediction = cnn.predict(testX, batch_size=1)
-        #gru_prediction = gru.predict(testX, batch_size=1)
+            lstm_prediction = lstm.predict(testX, batch_size=1)
+            print("Compute R^2 ...")
+            result = r2_score(testY, lstm_prediction)
+            print(result)
+            cnn_prediction = cnn.predict(testX, batch_size=1)
+            print("Compute R^2 ...")
+            result = r2_score(testY, cnn_prediction)
+            print(result)
+            #gru_prediction = gru.predict(testX, batch_size=1)
 
-        predictions = np.array([lstm_prediction, cnn_prediction])#, gru_prediction])
-        avg_prediction = np.mean(predictions, axis=0)
+            predictions = np.array([lstm_prediction, cnn_prediction])#, gru_prediction])
+            avg_prediction = np.mean(predictions, axis=0)
 
-        testY = testY.reshape(testY.shape[0], 1)
-        print("RMSPE: ")
-        result = Rnn.rmspe(testY, avg_prediction)
-        print(result)
-        print("Compute R^2 ...")
-        result = r2_score(testY, avg_prediction)
-        print(result)
+            testY = testY.reshape(testY.shape[0], 1)
+            print("RMSPE: ")
+            result = Rnn.rmspe(testY, avg_prediction)
+            print(result)
+            print("Compute R^2 ...")
+            r2 = r2_score(testY, avg_prediction)
+            print(r2)
+
+            r2_score_cv += r2
+            input()
+            if r2 > max_r2:
+                max_r2 = r2
+
+        print('Avg cross-validated R^2 score: ' + str(float(r2_score_cv / nb_folds)))
 
 
 if __name__ == '__main__':
     #DatasetBuilder.write_all_data_to_csv("idk.csv", datatype='numerical', include_timestamps=True)
-    datatype = 'all'
+    datatype = 'numerical'
     include_timestamps = False
 
     db_handler = DbHandler(datatype, include_timestamps)
@@ -361,7 +383,7 @@ if __name__ == '__main__':
         #reg.gradient_boosted_regression(include_timestamps, i, 'exclude VA')
     #feature_vector = [1, 20, 22, 24, 37, 56, 76, 117, 190, 211, 244]
     #feature_vector = [1, 20, 21, 22,24, 76, 117, 244, 275]
-    reg.rnn_regression_cv(include_timestamps, previous_visits=2,
-                        features='all',
+    reg.rnn_regression_cv(include_timestamps, previous_visits=3,
+                        features=[0, 1],
                         nn_type='lstm', custom=True)
-    #reg.rnn_ensemble_regression(include_timestamps, previous_visits=2, features=feature_vector)
+    #reg.voting_regression(include_timestamps, previous_visits=2, features='exclude VA')
