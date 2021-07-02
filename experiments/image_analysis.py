@@ -13,8 +13,8 @@ from tslearn.preprocessing import TimeSeriesResampler
 from tslearn.utils import to_time_series_dataset
 
 import config
-from data_handling.build_dataset_v1 import read_all_images, reshape_images
-from data_handling.latent_code_handler import LatentCodeHandler
+from data_processing.build_dataset_v1 import read_all_images, reshape_images
+from data_processing.latent_code_handler import LatentCodeHandler
 
 
 class ImageAnalysis:

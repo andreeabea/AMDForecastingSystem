@@ -8,7 +8,7 @@ import config
 import pandas as pd
 import numpy as np
 
-from data_handling.latent_code_handler import LatentCodeHandler
+from data_processing.latent_code_handler import LatentCodeHandler
 
 
 class OCTFeatureExtractor:

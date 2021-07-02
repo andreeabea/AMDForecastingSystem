@@ -2,7 +2,7 @@ import os
 # initialize the path to the *original* input directory of images
 ORIG_INPUT_DATASET = "D:\\Licenta\\licenta\\data"
 
-VISUAL_ACUITY_DATA_PATH = "data_handling/DMLVAVcuID.xls"
+VISUAL_ACUITY_DATA_PATH = "data_processing/DMLVAVcuID.xls"
 
 # TODO: database
 # initialize the base path to the *new* directory that will contain

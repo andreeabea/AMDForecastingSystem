@@ -2,8 +2,8 @@ import shap
 import tensorflow as tf
 import numpy as np
 
-from data_handling.db_handler import DbHandler
-from data_handling.timeseries_augmentation import TimeSeriesGenerator
+from data_processing.db_handler import DbHandler
+from data_processing.timeseries_augmentation import TimeSeriesGenerator
 from neural_networks.rnn import Rnn
 from regression import TimeSeriesRegressor
 from itertools import islice, chain

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import config
-from data_handling.oct_feature_extraction import OCTFeatureExtractor
+from data_processing.oct_feature_extraction import OCTFeatureExtractor
 
 
 class DatasetBuilder:

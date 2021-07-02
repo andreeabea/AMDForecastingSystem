@@ -35,7 +35,7 @@ class VisualAcuityAnalysis:
         return visualAcuity
 
     def get_visual_acuity_data(self):
-        inputData = pd.read_csv("../data_handling/DMLVAVcuID_v1.csv", nrows=282, header=None)
+        inputData = pd.read_csv("../data_processing/DMLVAVcuID_v1.csv", nrows=282, header=None)
 
         get_chunk = self.flow_from_df(inputData)
         chunk = next(get_chunk)

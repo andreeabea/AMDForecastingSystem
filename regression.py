@@ -13,9 +13,9 @@ import config
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from data_handling.db_handler import DbHandler
-from data_handling.feature_selection import FeatureSelector
-from data_handling.timeseries_augmentation import TimeSeriesGenerator
+from data_processing.db_handler import DbHandler
+from data_processing.feature_selection import FeatureSelector
+from data_processing.timeseries_augmentation import TimeSeriesGenerator
 from neural_networks.cnn import Cnn
 from neural_networks.rnn import Rnn
 

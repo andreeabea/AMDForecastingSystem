@@ -6,7 +6,7 @@ from tslearn.utils import to_time_series_dataset
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from data_handling.db_handler import DbHandler
+from data_processing.db_handler import DbHandler
 
 
 class TimeSeriesClustering:

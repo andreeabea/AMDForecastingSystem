@@ -14,7 +14,7 @@ import numpy as np
 from scipy.stats import pearsonr
 from scipy.stats import spearmanr
 
-from data_handling.build_dataset_v1 import create_sequences, find_visual_acuity, append_va_to_features
+from data_processing.build_dataset_v1 import create_sequences, find_visual_acuity, append_va_to_features
 from neural_networks.lstm_initial import Lstm
 
 from visual_acuity_analysis import VisualAcuityAnalysis

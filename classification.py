@@ -6,8 +6,8 @@ from tslearn.neighbors import KNeighborsTimeSeriesClassifier
 from tslearn.svm import TimeSeriesSVC
 from tslearn.utils import to_time_series_dataset
 
-from data_handling.db_handler import DbHandler
-from data_handling.timeseries_augmentation import TimeSeriesGenerator
+from data_processing.db_handler import DbHandler
+from data_processing.timeseries_augmentation import TimeSeriesGenerator
 from neural_networks.cnn import Cnn
 from regression import TimeSeriesRegressor
 from sklearn.metrics import confusion_matrix
