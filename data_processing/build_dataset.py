@@ -29,7 +29,7 @@ class DatasetBuilder:
 
     @staticmethod
     def handle_bold_cells(path):
-        # method to find the bold cells in the excel file, those represent when the patient received treatment
+        # method to find the bold cells in the excel file, those that show when the patient received treatment
         workbook = xlrd.open_workbook(path, formatting_info=True)
         sheet = workbook.sheet_by_index(0)
         new_wb = copy(workbook)

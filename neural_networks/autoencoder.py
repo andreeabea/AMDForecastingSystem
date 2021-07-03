@@ -15,7 +15,6 @@ from data_processing.build_dataset_v1 import split_data
 class Autoencoder:
 
     def __init__(self, latent_dim=256):
-        # initially tried with 16, but it was too small
         self.latent_dim = latent_dim
 
         self.trainX, self.validX, self.testX = split_data()
@@ -119,7 +118,7 @@ class Autoencoder:
         # plot training and validation loss
         plt.plot(self.model.history.history['loss'], label='Train loss', alpha=.5)
         plt.plot(self.model.history.history['val_loss'], label='Val. loss', alpha=.5)
-        plt.title('Linear model loss')
+        plt.title('Autoencoder loss')
         plt.legend()
         plt.show()
 

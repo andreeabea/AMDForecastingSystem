@@ -250,8 +250,8 @@ class TimeSeriesRegressor:
         #lstm = Rnn(trainX, trainY, validX, validY, testX, testY, model=lstm)
         #lstm.evaluate_model()
 
-        cnn = tf.keras.models.load_model("best_models/rnn-num-img-res-0.95.h5", custom_objects=dependencies)
-        members.append(cnn)
+        rnn = tf.keras.models.load_model("best_models/rnn-num-img-res-0.95.h5", custom_objects=dependencies)
+        members.append(rnn)
         #cnn.summary()
         gru = tf.keras.models.load_model("models/gru2-numerical-woVA2.h5", custom_objects=dependencies)
         #members.append(gru)

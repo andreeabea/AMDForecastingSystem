@@ -27,6 +27,8 @@ class OCTFeatureExtractor:
                      TOTAL_VOLUME_FEATURE]
 
     def get_feature_df(self, feature_name, zone=0):
+        # method to get features from the XML files
+        # retina zone parameter ranges from 0 to 8 : C0, N1, N2, S1, S2, T1, T2, I1, I2
         df = pd.DataFrame()
 
         for patient in os.scandir(config.ORIG_INPUT_DATASET):
@@ -80,7 +82,6 @@ class OCTFeatureExtractor:
 
     def get_images_df(self):
         df = pd.DataFrame()
-
         code_handler = LatentCodeHandler('../models/autoencoder256-best.h5')
 
         for patient in os.scandir(config.ORIG_INPUT_DATASET):

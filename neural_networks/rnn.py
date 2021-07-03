@@ -139,7 +139,7 @@ class Rnn:
 
         plt.plot(self.model.history.history['loss'], label='Train loss', alpha=.5)
         plt.plot(self.model.history.history['val_loss'], label='Val. loss', alpha=.5)
-        plt.title('Linear model loss')
+        plt.title('Rnn loss')
         plt.legend()
         plt.show()
 
