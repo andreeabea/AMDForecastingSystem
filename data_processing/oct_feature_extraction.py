@@ -128,3 +128,35 @@ class OCTFeatureExtractor:
         images = np.vstack(images)
         images = images.reshape(-1, x, y, 1)
         return images
+
+    @staticmethod
+    def get_fundus_paths_df():
+        df = pd.DataFrame()
+
+        for patient in os.scandir(config.ORIG_INPUT_DATASET):
+            visits = len(list(os.scandir(patient)))
+
+            if (visits <= 1):
+                continue
+
+            for visit in os.scandir(patient):
+                for eye in os.scandir(visit):
+                    date = datetime.strptime(visit.name.split("- ")[1], '%d.%m.%Y')
+                    for file in os.scandir(eye):
+                        if file.path.endswith(".xml"):
+                            xmlfile = minidom.parse(file.path)
+                            fundusImgPath = xmlfile.getElementsByTagName('ExamURL')[0].firstChild.nodeValue.rsplit("\\", 1)[1]
+                            patientID = xmlfile.getElementsByTagName('ID')[0].firstChild.nodeValue
+                    fundusImgPath = './data/' + patient.name + '/' + visit.name + '/' + eye.name + '/' + fundusImgPath
+                    if "OS" in eye.name:
+                        newEntryL = pd.DataFrame({'ID': [str(patientID) + 'OS'], 'Date': [date], 'path': fundusImgPath})
+                        df = df.append(newEntryL)
+                    else:
+                        newEntryR = pd.DataFrame({'ID': [str(patientID) + 'OD'], 'Date': [date], 'path': fundusImgPath})
+                        df = df.append(newEntryR)
+
+        return df
+
+
+if __name__ == '__main__':
+    OCTFeatureExtractor.get_fundus_paths_df().to_csv('../preprocessed_data/fundus_img_paths.csv')

@@ -1,6 +1,6 @@
 import os
 # initialize the path to the *original* input directory of images
-ORIG_INPUT_DATASET = "D:\\Licenta\\licenta\\data"
+ORIG_INPUT_DATASET = "D:\\Licenta\\AMDForecastingSystem\\data"
 
 VISUAL_ACUITY_DATA_PATH = "data_processing/DMLVAVcuID.xls"
 
