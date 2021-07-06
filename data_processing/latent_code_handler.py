@@ -72,6 +72,23 @@ class LatentCodeHandler:
         testX = testX / 255.0
         return testX
 
+    def get_image(self, path):
+        testX = []
+        image = Image.open(path).convert("L")
+
+        # resize img
+        image = np.array(image.resize((self.image_width, self.image_height), Image.ANTIALIAS))
+        image = image.reshape(self.image_width, self.image_height, 1)
+
+        testX.append(image)
+
+        testX = np.vstack(testX)
+        testX = testX.reshape(-1, self.image_width, self.image_height, 1)
+        # trainX, validX, testX = split_data()
+
+        testX = testX / 255.0
+        return testX
+
     def reconstruct_images(self, testX):
         prediction = self.model.predict(testX)
 
@@ -85,7 +102,7 @@ class LatentCodeHandler:
     def get_gradcam_heatmap(self, images):
         # we create a model that maps the input image to conv layer activations
         #5,7,8
-        last_conv_layer = self.model.get_layer("conv2d_5")
+        last_conv_layer = self.model.get_layer("conv2d_7")
         last_conv_layer_model = Model(self.model.inputs, last_conv_layer.output)
 
         # we create a model that maps the activations of the conv layer
@@ -149,7 +166,8 @@ class LatentCodeHandler:
         superimposed_img = preprocessing.image.array_to_img(superimposed_img)
 
         # Display Grad CAM
-        superimposed_img.show("gradcam heatmap")
+        #superimposed_img.show("gradcam heatmap")
+        superimposed_img.save('./heatmap.png')
 
 
 if __name__ == '__main__':

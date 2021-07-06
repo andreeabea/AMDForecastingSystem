@@ -3,6 +3,7 @@
 # Run this app with `python app.py` and
 # visit http://127.0.0.1:8050/ in your web browser.
 import base64
+import datetime
 import os
 import re
 from io import BytesIO
@@ -10,12 +11,20 @@ from io import BytesIO
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import tensorflow as tf
 import dash_table
 import pandas as pd
+import numpy as np
 from dash.dependencies import Output, Input, State
 from PIL import Image
+from dash.exceptions import PreventUpdate
+import plotly.graph_objs as go
+import plotly.express as px
 
 from data_processing.db_handler import DbHandler
+from data_processing.latent_code_handler import LatentCodeHandler
+from data_processing.timeseries_augmentation import TimeSeriesGenerator
+from neural_networks.rnn import Rnn
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -145,24 +154,25 @@ def render_content(tab):
                 id='confirm',
                 message='Danger danger! Are you sure you want to continue?',
             ),
-            html.Label(['Select patient and eye', dcc.Dropdown(
+            html.Div(html.Label(['Select patient and eye', dcc.Dropdown(
                 id='dropdown',
                 options=[{"label": x, "value": x} for x in patients],
                 value=patients[0]
-            )], style={'font-size': '12px'}),
-            html.Label(['Choose forecasting time span', dcc.Slider(
-                min=1,
-                max=3,
-                value=1,
-                marks={
-                    1: {'label': '1 month'},
-                    2: {'label': '2 month'},
-                    3: {'label': '3 months'}
-                },
-                included=False
-            )], style={'font-size': '12px'})
-            ,
-            html.Button('Predict', id='predict', style={'left': '30%', 'position': 'relative'})
+            )], style={'font-size': '12px'})),
+            # html.Label(['Choose forecasting time span', dcc.Slider(
+            #     min=1,
+            #     max=3,
+            #     value=1,
+            #     marks={
+            #         1: {'label': '1 month'},
+            #         2: {'label': '2 month'},
+            #         3: {'label': '3 months'}
+            #     },
+            #     included=False
+            # )], style={'font-size': '12px'})
+            # ,
+            html.Button('Predict', id='predict', style={'left': '30%', 'position': 'relative'}),
+            html.Div(id='prediction-container')
         ]
 
         return html.Div([
@@ -172,20 +182,31 @@ def render_content(tab):
                                 'horizontal-align': 'middle'}),
             html.Div(id='dd-output-container',
                      style={'width': '67%', 'display': 'inline-block', 'vertical-align': 'middle',
-                            'horizontal-align': 'middle', 'padding-top': '10px', 'padding-left': '20px'})
+                            'horizontal-align': 'middle', 'padding-top': '10px', 'padding-left': '20px'}),
+            html.Div([dcc.Graph(
+                id='va-evolution-graph',
+                style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle',
+                   }),
+                html.Div(id='heatmap-container', title='Fundus image heatmap',
+                         style={'width': '17.25%', 'display': 'inline-block', 'vertical-align': 'middle',
+                                'horizontal-align': 'middle', 'padding-top': '10px', 'padding-left': '123px'})
+            ])
         ])
 
 
 current_patient = None
+patient_data_notres = None
 
 
 @app.callback(
     dash.dependencies.Output('dd-output-container', 'children'),
     [dash.dependencies.Input('dropdown', 'value')])
 def update_output(value):
-    global current_patient
+    global current_patient, patient_data_notres
     current_patient = value
     patient_data = data.loc[data.index.get_level_values(0) == value].copy()
+    patient_data.drop(patient_data.tail(1).index, inplace=True)
+    patient_data_notres = patient_data
     patient_data.columns = features1
     patient_data.insert(0, 'Visit date', patient_data.index.get_level_values(1))
     patient_data['Visit date'] = patient_data['Visit date'].dt.date
@@ -202,12 +223,13 @@ def update_output(value):
         }), style={'width': '70%', 'display': 'inline-block', 'vertical-align': 'middle',
                                 'horizontal-align': 'middle'}),
         html.Div(id='oct-image-container', style={'width': '25%', 'display': 'inline-block', 'vertical-align': 'middle',
-                            'horizontal-align': 'middle', 'padding-top': '10px', 'padding-left': '20px'})
+                            'horizontal-align': 'middle', 'padding-top': '10px', 'padding-left': '20px'}, title='OCT fundus scan')
     ])
 
 
 @app.callback(
-    Output('oct-image-container', 'children'),
+    [Output('oct-image-container', 'children'),
+     Output('heatmap-container', 'children')],
     Input('table', 'active_cell'),
     State('table', 'data')
 )
@@ -217,13 +239,23 @@ def getActiveCell(active_cell, data):
         if col == 'Visit date':
             row = active_cell['row']
             cellData = data[row][col]
+            global img_path
             img_path = DbHandler.get_fundus_img_path(current_patient, cellData)
+            code_handler = LatentCodeHandler("./models/autoencoder256-original-sgm.h5")
+            img = code_handler.get_image(img_path)
+            code_handler.get_gradcam_heatmap(img)
+            test_base64 = base64.b64encode(open('heatmap.png', 'rb').read()).decode('ascii')
+
             with Image.open(img_path) as image:
                 try:
-                    return html.Img(src="data:image/png;base64, " + pil_to_b64(image), style={'height':'90%', 'width':'90%'})
+                   return [html.Img(src="data:image/png;base64, " + pil_to_b64(image),
+                                               style={'height':'90%', 'width':'90%'}),
+                                html.Img(src='data:image/png;base64,{}'.format(test_base64),
+                                         style={'height': '90%', 'width': '90%'})
+                                ]
                 except Exception:
                     print("Cannot convert" + img_path)
-    return html.P('No visit selected')
+    return [html.P('No visit selected'), html.P('No visit selected')]
 
 
 def pil_to_b64(im, enc_format="png", **kwargs):
@@ -231,6 +263,115 @@ def pil_to_b64(im, enc_format="png", **kwargs):
     im.save(buff, format=enc_format, **kwargs)
     encoded = base64.b64encode(buff.getvalue()).decode("utf-8")
     return encoded
+
+
+@app.callback(
+    [dash.dependencies.Output('prediction-container', 'children'),
+     dash.dependencies.Output('va-evolution-graph', 'figure')],
+    dash.dependencies.Input('predict', 'n_clicks'))
+def update_output(n_clicks):
+    global nb_clicks
+    nb_clicks = n_clicks
+    if not n_clicks:
+        raise PreventUpdate
+    db_handler_all = DbHandler('all', include_timestamps=False)
+    all_data = db_handler_all.get_data_from_csv()
+    patient_data = all_data.loc[all_data.index.get_level_values(0) == current_patient].copy()
+    actual_va = patient_data["VA"]. iloc[-1]
+    gen = TimeSeriesGenerator(patient_data)
+    dependencies = {
+        'root_mean_squared_error': Rnn.root_mean_squared_error
+    }
+
+    if len(patient_data.index) > 3:
+        X, Y = gen.generate_timeseries(size=3)
+        X = X.reshape(-1, 1, X.shape[1])
+        if len(X) > 1:
+            X = X[len(X)-2:len(X)-1]
+        lstm = tf.keras.models.load_model("best_models/lstm-v3-all-res-0.99-best.h5", custom_objects=dependencies)
+        lstm_prediction = lstm.predict(X, batch_size=1)[0][0]
+        return [html.P(['Model: LSTM network, Performance: 99%', html.Br(),
+                        'Actual VA: ' + str(actual_va.round(2)), html.Br(),
+                        'Predicted VA: ' + str(lstm_prediction.round(2)), html.Br(),
+                        'Prediction error: ' + str(abs(lstm_prediction - actual_va.round(2)).round(2))]),
+                go.Figure(data=[go.Scatter(y=patient_data_notres['VA'], x=patient_data_notres.index.get_level_values(1), name='Time-series with previous visits'),
+                                go.Scatter(y=[patient_data_notres['VA'][-1], lstm_prediction],
+                                           x=[patient_data_notres.index.get_level_values(1)[-1],
+                                              patient_data_notres.index.get_level_values(1)[-1] + pd.DateOffset(months=1)], mode='lines',
+                                           name='Model forecasting', showlegend=False),
+                                go.Scatter(y=[lstm_prediction], x=[patient_data_notres.index.get_level_values(1)[-1] + pd.DateOffset(months=1)],
+                                           name='Model prediction', marker=dict(color=px.colors.qualitative.Plotly[1])),
+                                go.Scatter(y=[patient_data_notres['VA'][-1], actual_va],
+                                           x=[patient_data_notres.index.get_level_values(1)[-1],
+                                              patient_data_notres.index.get_level_values(1)[-1] + pd.DateOffset(months=1)],
+                                           mode='lines',
+                                           name='Model prediction', showlegend=False, line=dict(color=px.colors.qualitative.Plotly[2])),
+                                go.Scatter(y=[actual_va],
+                                           x=[patient_data_notres.index.get_level_values(1)[-1] + pd.DateOffset(months=1)],
+                                           name='Actual evolution', marker=dict(color=px.colors.qualitative.Plotly[2]))
+                                ],
+                          layout={'title': 'Visual acuity evolution'})]
+    elif len(patient_data.index) == 3:
+        X, Y = gen.generate_timeseries(size=2)
+        X = X.reshape(-1, 1, X.shape[1])
+        lstm = tf.keras.models.load_model("best_models/lstm-v2-all-res-0.98.h5", custom_objects=dependencies)
+        lstm_prediction = lstm.predict(X, batch_size=1)[0][0]
+        return [html.P(['Model: LSTM network, Performance: 98%', html.Br(),
+                       'Actual VA: ' + str(actual_va.round(2)), html.Br(),
+                       'Predicted VA: ' + str(lstm_prediction.round(2)), html.Br(),
+                       'Prediction error: ' + str(abs(lstm_prediction - actual_va).round(2))]),
+                go.Figure(data=[go.Scatter(y=patient_data_notres['VA'], x=patient_data_notres.index.get_level_values(1),
+                                           name='Time-series with previous visits'),
+                                go.Scatter(y=[patient_data_notres['VA'][-1], lstm_prediction],
+                                           x=[patient_data_notres.index.get_level_values(1)[-1],
+                                              patient_data.index.get_level_values(1)[-1]], mode='lines',
+                                           name='Model forecasting', showlegend=False),
+                                go.Scatter(y=[lstm_prediction], x=[patient_data.index.get_level_values(1)[-1]],
+                                           name='Model prediction', marker=dict(color=px.colors.qualitative.Plotly[1])),
+                                go.Scatter(y=[patient_data_notres['VA'][-1], actual_va],
+                                           x=[patient_data_notres.index.get_level_values(1)[-1],
+                                              patient_data.index.get_level_values(1)[-1]],
+                                           mode='lines',
+                                           name='Model prediction', showlegend=False,
+                                           line=dict(color=px.colors.qualitative.Plotly[2])),
+                                go.Scatter(y=[actual_va],
+                                           x=[patient_data.index.get_level_values(1)[-1]],
+                                           name='Actual evolution', marker=dict(color=px.colors.qualitative.Plotly[2]))
+                                ],
+                          layout={'title': 'Visual acuity evolution'})]
+    elif len(patient_data.index) == 2:
+        X, Y = gen.generate_timeseries(size=1)
+        X = X.reshape(-1, 1, X.shape[1])
+        lstm = tf.keras.models.load_model("best_models/rnn-v1-all-res-0.984.h5", custom_objects=dependencies)
+        lstm_prediction = lstm.predict(X, batch_size=1)[0][0]
+        return [html.P(['Model: SimpleRNN network, Performance: 98%', html.Br(),
+                       'Actual VA: ' + str(actual_va.round(2)), html.Br(),
+                       'Predicted VA: ' + str(lstm_prediction.round(2)), html.Br(),
+                       'Prediction error: ' + str(abs(lstm_prediction - actual_va).round(2))]),
+                go.Figure(data=[go.Scatter(y=patient_data_notres['VA'], x=patient_data_notres.index.get_level_values(1),
+                                           name='Time-series with previous visits'),
+                                go.Scatter(y=[patient_data_notres['VA'][-1], lstm_prediction],
+                                           x=[patient_data_notres.index.get_level_values(1)[-1],
+                                              patient_data_notres.index.get_level_values(1)[-1] + pd.DateOffset(
+                                                  months=1)], mode='lines',
+                                           name='Model forecasting', showlegend=False),
+                                go.Scatter(y=[lstm_prediction], x=[
+                                    patient_data_notres.index.get_level_values(1)[-1] + pd.DateOffset(months=1)],
+                                           name='Model prediction', marker=dict(color=px.colors.qualitative.Plotly[1])),
+                                go.Scatter(y=[patient_data_notres['VA'][-1], actual_va],
+                                           x=[patient_data_notres.index.get_level_values(1)[-1],
+                                              patient_data_notres.index.get_level_values(1)[-1] + pd.DateOffset(
+                                                  months=1)],
+                                           mode='lines',
+                                           name='Model prediction', showlegend=False,
+                                           line=dict(color=px.colors.qualitative.Plotly[2])),
+                                go.Scatter(y=[actual_va],
+                                           x=[patient_data_notres.index.get_level_values(1)[-1] + pd.DateOffset(
+                                               months=1)],
+                                           name='Actual evolution', marker=dict(color=px.colors.qualitative.Plotly[2]))
+                                ],
+                          layout={'title': 'Visual acuity evolution'})]
+    return html.P('')
 
 
 @app.callback(Output('confirm', 'displayed'),
