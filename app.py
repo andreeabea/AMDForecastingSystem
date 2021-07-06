@@ -11,6 +11,7 @@ from io import BytesIO
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import flask
 import tensorflow as tf
 import dash_table
 import pandas as pd
@@ -28,7 +29,8 @@ from neural_networks.rnn import Rnn
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets, suppress_callback_exceptions=True)
+assets_path = os.getcwd() +'/shap_explanations'
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets, suppress_callback_exceptions=True, assets_folder=assets_path)
 
 datatype = 'numerical'
 include_timestamps = True
@@ -76,8 +78,8 @@ app.layout = html.Div(children=[
     html.H6(children='AMD evolution forecasting system'),
 
     dcc.Tabs(id='tabs-example', value='tab-1', children=[
-        dcc.Tab(label='Train models', value='tab-1', style=tab_style),
-        dcc.Tab(label='Forecast visual acuities', value='tab-2', style=tab_style),
+        dcc.Tab(label='Predict future visual acuities', value='tab-1', style=tab_style),
+        dcc.Tab(label='Visualize forecasting explanations', value='tab-2', style=tab_style),
     ], style=tabs_styles),
     html.Div(id='tabs-example-content')
 
@@ -98,54 +100,68 @@ app.layout = html.Div(children=[
 @app.callback(Output('tabs-example-content', 'children'),
               Input('tabs-example', 'value'))
 def render_content(tab):
-    if tab == 'tab-1':
-        algorithms = ["Linear regression", "LASSO regression", "Gradient Boosting Regression",
-                      "Random Forest Regression", "Extremely Randomized Trees", "Simple RNN network",
-                      "LSTM network", "GRU network"]
-        data_transform = ['Monthly time-series resampling', "Original series with timestamps as features"]
-        feature_sel = ['All features', "Recursive Feature Elimination", "LASSO feature selection"]
-
-        controls = [
-            html.Label(['Machine Learning algorithm', dcc.Dropdown(
-                options=[{"label": x, "value": x} for x in algorithms],
-                value=algorithms[0]
-            )], style={'font-size': '12px'}),
-            html.Label(['Data transformation method', dcc.Dropdown(
-                options=[{"label": x, "value": x} for x in data_transform],
-                value=data_transform[0],
-            )], style={'font-size': '12px'})
-            ,
-            html.Label(['Feature selection method', dcc.Dropdown(
-                options=[{"label": x, "value": x} for x in feature_sel],
-                value=feature_sel[0],
-            )], style={'font-size': '12px'}),
-            html.Label(['Time-series size', dcc.Slider(
-                min=2,
-                max=10,
-                value=2,
-                marks={
-                    2: {'label': '2 visits'},
-                    3: {'label': '3 visits'},
-                    4: {'label': '4 visits'},
-                    5: {'label': '5 visits'},
-                    6: {'label': '6 visits'},
-                    7: {'label': '7 visits'},
-                    8: {'label': '8 visits'},
-                    9: {'label': '9 visits'},
-                    10: {'label': '10 visits'}
-                },
-                included=False
-            )], style={'font-size': '12px'})
-            ,
-            html.Button('Train', id='submit-val', style={'left': '30%', 'position': 'relative'})
-        ]
-
-        return html.Div([
-            html.Div([html.H3(''),
-                      html.Div(controls),  # html.Div(id="folder-files")
-                      ])
-        ], style={'width': '30%', 'display': 'inline-block', 'vertical-align': 'middle'})
-    elif tab == 'tab-2':
+    if tab == 'tab-2':
+        patient_data = get_patient_data(current_patient)
+        return html.Div([html.P('Patient with ID 8138, right eye (OD)'),
+                         html.Div(dash_table.DataTable(
+                             id='table',
+                             columns=[{"name": i, "id": i, "selectable": True} for i in patient_data.columns],
+                             data=patient_data.to_dict('records'),
+                             style_table={
+                                 'overflowY': 'scroll',
+                                 'overflowX': 'scroll'
+                             }), style={'width': '100%', 'display': 'inline-block', 'vertical-align': 'middle',
+                                        'horizontal-align': 'middle', 'padding-bottom':'15px'}),
+                         html.Br(),
+                         html.Iframe(src=app.get_asset_url('shap.html'),
+                                    style={'width':'100%', 'overflow': 'hidden'})])
+        # algorithms = ["Linear regression", "LASSO regression", "Gradient Boosting Regression",
+        #               "Random Forest Regression", "Extremely Randomized Trees", "Simple RNN network",
+        #               "LSTM network", "GRU network"]
+        # data_transform = ['Monthly time-series resampling', "Original series with timestamps as features"]
+        # feature_sel = ['All features', "Recursive Feature Elimination", "LASSO feature selection"]
+        #
+        #controls = [
+        #    html.Iframe(src=app.get_asset_url('shap.html'))
+        #     html.Label(['Machine Learning algorithm', dcc.Dropdown(
+        #         options=[{"label": x, "value": x} for x in algorithms],
+        #         value=algorithms[0]
+        #     )], style={'font-size': '12px'}),
+        #     html.Label(['Data transformation method', dcc.Dropdown(
+        #         options=[{"label": x, "value": x} for x in data_transform],
+        #         value=data_transform[0],
+        #     )], style={'font-size': '12px'})
+        #     ,
+        #     html.Label(['Feature selection method', dcc.Dropdown(
+        #         options=[{"label": x, "value": x} for x in feature_sel],
+        #         value=feature_sel[0],
+        #     )], style={'font-size': '12px'}),
+        #     html.Label(['Time-series size', dcc.Slider(
+        #         min=2,
+        #         max=10,
+        #         value=2,
+        #         marks={
+        #             2: {'label': '2 visits'},
+        #             3: {'label': '3 visits'},
+        #             4: {'label': '4 visits'},
+        #             5: {'label': '5 visits'},
+        #             6: {'label': '6 visits'},
+        #             7: {'label': '7 visits'},
+        #             8: {'label': '8 visits'},
+        #             9: {'label': '9 visits'},
+        #             10: {'label': '10 visits'}
+        #         },
+        #         included=False
+        #     )], style={'font-size': '12px'})
+        #     ,
+        #     html.Button('Train', id='submit-val', style={'left': '30%', 'position': 'relative'})
+        #]
+        #
+        #return html.Div([html.H3(''),
+        #              html.Div(controls),  # html.Div(id="folder-files")
+        #              ], style={'width': '100%', 'vertical-align': 'middle'}
+        #    )
+    elif tab == 'tab-1':
         patients = data.index.get_level_values(0).tolist()
         patients = list(dict.fromkeys(patients))
         # forecast for existing patient or add new patient
@@ -198,12 +214,7 @@ current_patient = None
 patient_data_notres = None
 
 
-@app.callback(
-    dash.dependencies.Output('dd-output-container', 'children'),
-    [dash.dependencies.Input('dropdown', 'value')])
-def update_output(value):
-    global current_patient, patient_data_notres
-    current_patient = value
+def get_patient_data(value):
     patient_data = data.loc[data.index.get_level_values(0) == value].copy()
     patient_data.drop(patient_data.tail(1).index, inplace=True)
     patient_data_notres = patient_data
@@ -211,6 +222,15 @@ def update_output(value):
     patient_data.insert(0, 'Visit date', patient_data.index.get_level_values(1))
     patient_data['Visit date'] = patient_data['Visit date'].dt.date
     patient_data = patient_data.round(2)
+    return patient_data
+
+@app.callback(
+    dash.dependencies.Output('dd-output-container', 'children'),
+    [dash.dependencies.Input('dropdown', 'value')])
+def update_output(value):
+    global current_patient, patient_data_notres
+    current_patient = value
+    patient_data = get_patient_data(value)
 
     return html.Div([
         html.Div(dash_table.DataTable(

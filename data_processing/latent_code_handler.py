@@ -102,7 +102,7 @@ class LatentCodeHandler:
     def get_gradcam_heatmap(self, images):
         # we create a model that maps the input image to conv layer activations
         #5,7,8
-        last_conv_layer = self.model.get_layer("conv2d_7")
+        last_conv_layer = self.model.get_layer("conv2d_8")
         last_conv_layer_model = Model(self.model.inputs, last_conv_layer.output)
 
         # we create a model that maps the activations of the conv layer
