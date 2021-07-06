@@ -21,7 +21,7 @@ class DatasetBuilder:
         pd.set_option('display.max_columns', None)
         pd.options.display.float_format = '{:,.2f}'.format
 
-        # DatasetBuilder.handle_bold_cells(path)
+        DatasetBuilder.handle_bold_cells(path)
         xls = pd.ExcelFile(path)
         self.VA_sheet = xls.parse(0, header=None)
         self.data = pd.DataFrame()
@@ -269,3 +269,13 @@ class DatasetBuilder:
         correlation_matrix = correlation_matrix.div(nb_timeseries)
         sns.heatmap(correlation_matrix)
         plt.show()
+
+
+if __name__ == '__main__':
+    DatasetBuilder.write_all_data_to_csv("preprocessed_data/numerical_data_notres.csv", datatype='numerical', include_timestamps=True)
+    DatasetBuilder.write_all_data_to_csv("preprocessed_data/numerical_data_res.csv", datatype='numerical',
+                                         include_timestamps=False)
+    DatasetBuilder.write_all_data_to_csv("preprocessed_data/image_data_notres.csv", datatype='images',
+                                         include_timestamps=True)
+    DatasetBuilder.write_all_data_to_csv("preprocessed_data/image_data_res.csv", datatype='images',
+                                         include_timestamps=False)

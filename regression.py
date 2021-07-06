@@ -315,12 +315,12 @@ class TimeSeriesRegressor:
                                                                                      Rnn.root_mean_squared_error])
             lstm.evaluate(testX, testY)
 
-            cnn = tf.keras.models.load_model("best_models/rnn-num-img-res-0.95.h5", custom_objects=dependencies)
-            members.append(cnn)
-            cnn.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
+            rnn = tf.keras.models.load_model("best_models/rnn-num-img-res-0.95.h5", custom_objects=dependencies)
+            members.append(rnn)
+            rnn.compile(loss='mean_squared_error', optimizer='adam', metrics=['mean_absolute_error',
                                                                                      'mean_squared_error',
                                                                                      Rnn.root_mean_squared_error])
-            cnn.evaluate(testX, testY)
+            rnn.evaluate(testX, testY)
 
         #gru = tf.keras.models.load_model("models/gru2-numerical-woVA2.h5", custom_objects=dependencies)
         #members.append(gru)

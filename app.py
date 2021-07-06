@@ -217,6 +217,7 @@ patient_data_notres = None
 def get_patient_data(value):
     patient_data = data.loc[data.index.get_level_values(0) == value].copy()
     patient_data.drop(patient_data.tail(1).index, inplace=True)
+    global patient_data_notres
     patient_data_notres = patient_data
     patient_data.columns = features1
     patient_data.insert(0, 'Visit date', patient_data.index.get_level_values(1))
@@ -228,7 +229,7 @@ def get_patient_data(value):
     dash.dependencies.Output('dd-output-container', 'children'),
     [dash.dependencies.Input('dropdown', 'value')])
 def update_output(value):
-    global current_patient, patient_data_notres
+    global current_patient
     current_patient = value
     patient_data = get_patient_data(value)
 
